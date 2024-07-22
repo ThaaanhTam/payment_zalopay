@@ -36,9 +36,10 @@ class ZaloPayController(http.Controller):
     def zlpay_callback(self):
         """Xử lý callback từ ZaloPay."""
         result = {}
-
+        logging.info("xử lý callback")
         try:
             cbdata = request.jsonrequest
+            _logger.info("Received callback from ZaloPayyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy: %s", request.jsonrequest)
             zlpay_provider = request.env['payment.provider'].sudo().search([('code', '=', 'zlpay')], limit=1)
             key2 = zlpay_provider.key2
 
@@ -47,6 +48,7 @@ class ZaloPayController(http.Controller):
             # Kiểm tra callback hợp lệ (đến từ ZaloPay server)
             if mac != cbdata['mac']:
                 # Callback không hợp lệ
+                _logger.error("Không nhận được dữ liệu JSON từ ZaloPay (main.py/50)")
                 result['return_code'] = -1
                 result['return_message'] = 'mac not equal'
             else:
