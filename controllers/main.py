@@ -37,8 +37,8 @@ class ZaloPayController(http.Controller):
         """Xử lý callback từ ZaloPay."""
         result = {}
         logging.info("xử lý callback")
-        cbdata = request.jsonrequest
-        _logger.info("Received callback from ZaloPayyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy: %s", request.jsonrequest)
+        # cbdata = request.jsonrequest
+        # _logger.info("Received callback from ZaloPayyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy: %s", request.jsonrequest)
         try:
             cbdata = request.jsonrequest
             _logger.info("Received callback from ZaloPayyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy: %s", request.jsonrequest)
