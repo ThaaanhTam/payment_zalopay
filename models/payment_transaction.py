@@ -64,7 +64,7 @@ class PaymentTransaction(models.Model):
         try:
             response = urllib.request.urlopen(url="https://sb-openapi.zalopay.vn/v2/create", data=urllib.parse.urlencode(order).encode())
             result = json.loads(response.read())
-            _logger.info("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa: %s", result)
+            _logger.info("111111111111111111111111111111111111: %s", result)
         except Exception as e:
             _logger.error("ZaloPay create order failed: %s", e)
             raise ValidationError(_("fffffffffffffffffffffffff: %s") % e)
