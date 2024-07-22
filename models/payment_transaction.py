@@ -10,7 +10,7 @@ import random
 from werkzeug import urls
 from odoo import _, api, fields, models
 from odoo.addons.payment_zlpay import const
-
+from odoo.http import request
 _logger = logging.getLogger(__name__)
 
 class PaymentTransaction(models.Model):
