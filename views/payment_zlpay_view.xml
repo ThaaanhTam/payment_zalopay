@@ -1,0 +1,34 @@
+<odoo>
+
+  <record id="payment_provider_form_zlpay" model="ir.ui.view">
+    <field name="name">ZLPay Provider Form</field>
+    <field name="model">payment.provider</field>
+    <field name="inherit_id" ref="payment.payment_provider_form" />
+    <field name="arch" type="xml">
+      <group name="provider_credentials" position="inside">
+        <group invisible="code != 'zlpay'"
+          name="zlpay_credentials">
+          <field name="key1"
+            string="key1"
+            required="code == 'zlpay' and state != 'disabled'"
+            
+          />
+          <field name="key2"
+            string="key2"
+            required="code == 'zlpay' and state != 'disabled'"
+            
+          />
+          <field name="appid"
+            string="appid"
+            required="code == 'zlpay' and state != 'disabled'"
+          />
+
+           <field name="app_user"
+            string="App User"
+            required="code == 'zlpay' and state != 'disabled'"
+          />
+        </group>
+      </group>
+    </field>
+  </record>
+</odoo>

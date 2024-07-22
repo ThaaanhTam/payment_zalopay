@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+  <record id="payment_provider_zlpay" model="payment.provider">
+    <field name="name">ZLPay</field>
+    <field name="code">zlpay</field>
+    <field name="image_128" type="base64" file="payment_zlpay/static/description/icon.png"/>
+    <!-- #Đảm bảo ref tham chiếu đúng External ID đã định nghĩa -->
+    <field name="redirect_form_view_id" ref="redirect_form"/>
+</record>
+
+</odoo>
