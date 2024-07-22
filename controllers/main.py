@@ -34,29 +34,30 @@ class ZaloPayController(http.Controller):
         csrf=False,
     )
     def zlpay_callback(self, **data):
-       
-
-        _logger.info("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000: %s", data)
+        _logger.info("ZaloPay callback received: %s", data)
         result = {}
 
         try:
+            # Lấy dữ liệu JSON từ yêu cầu callback của ZaloPay
             cbdata = request.jsonrequest
-            key2 = request.env['payment.provider'].search([('code', '=', 'zlpay')], limit=1).key2
+            key2 = 'trMrHtvjo6myautxDUiAcYsVtaeQ8nhf'
 
-
+            # Tính toán MAC
             mac = hmac.new(key2.encode(), cbdata['data'].encode(), hashlib.sha256).hexdigest()
 
+            # Kiểm tra tính hợp lệ của callback
             if mac != cbdata['mac']:
-            
+                # Callback không hợp lệ
                 result['return_code'] = -1
                 result['return_message'] = 'mac not equal'
             else:
-                # Successful payment
+                # Thanh toán thành công
                 dataJson = json.loads(cbdata['data'])
                 app_trans_id = dataJson['app_trans_id']
                 _logger.info("Update order's status = success where app_trans_id = %s", app_trans_id)
 
-                # Update the order status here
+                # Cập nhật trạng thái đơn hàng
+                # Bạn có thể thay thế đoạn mã này với logic cập nhật thực tế của bạn
                 request.env['payment.transaction'].sudo().search([('reference', '=', app_trans_id)]).write({
                     'state': 'done'
                 })
@@ -65,45 +66,9 @@ class ZaloPayController(http.Controller):
                 result['return_message'] = 'success'
         except Exception as e:
             _logger.error("ZaloPay callback processing failed: %s", e)
-            result['return_code'] = 0  # ZaloPay server will retry the callback (up to 3 times)
+            result['return_code'] = 0  # ZaloPay server sẽ callback lại (tối đa 3 lần)
             result['error'] = str(e)
 
-        # Respond to ZaloPay server
-        return json.dumps(result)
-
-    # @http.route(
-    #     '/payment/zlpay/status/<string:app_trans_id>',
-    #     type='http',
-    #     auth='public',
-    #     methods=['POST'],
-    #     csrf=False,
-    # )
-    # def zlpay_status(self, app_trans_id):
-        """Check the status of a transaction from ZaloPay."""
-
-        config = {
-            'app_id': '2554',  # Replace with your app_id
-            'key1': 'sdngKKJmqEMzvh5QQcdD2A9XBSKUNaYn'  # Replace with your key1
-        }
-
-        params = {
-            "app_id": config["app_id"],
-            "app_trans_id": app_trans_id
-        }
-
-        # Create MAC to verify request
-        data = "{}|{}|{}".format(config["app_id"], params["app_trans_id"], config["key1"])
-        params["mac"] = hmac.new(config['key1'].encode(), data.encode(), hashlib.sha256).hexdigest()
-
-        # Send request to ZaloPay
-        try:
-            response = urllib.request.urlopen(url="https://sb-openapi.zalopay.vn/v2/query", data=urllib.parse.urlencode(params).encode())
-            result = json.loads(response.read())
-
-            # Log the result
-            _logger.info("ZaloPay query result: %s", result)
-            
-            return request.make_response(json.dumps(result), headers={"Content-Type": "application/json"})
-        except Exception as e:
-            _logger.error("Error while making request to ZaloPay: %s", e)
-            return request.make_response(json.dumps({"error": str(e)}), headers={"Content-Type": "application/json"}, status=500)
+        # Thông báo kết quả cho ZaloPay server
+        return request.make_response(json.dumps(result), headers={"Content-Type": "application/json"})
+      
