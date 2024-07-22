@@ -23,63 +23,54 @@ class ZaloPayController(http.Controller):
     )
     def zlpay_return_from_checkout(self, **data):
         """Handle redirection after payment checkout."""
-
         _logger.info("Handling redirection from ZaloPay.")
-
-        # Redirect user to the status page.
-        # After redirection, user will see the payment status once the IPN processing is complete.
         return request.redirect("/payment/status")
 
-    # @http.route(
-    #     _callback_url,
-    #     type="json",
-    #     auth="public",
-    #     methods=["POST"],
-    #     csrf=False,
-    #     saveSession=False,  # No need to save the session
-    # )
-    # def zlpay_callback(self, **data):
-    #     """Process the callback data sent by ZaloPay to the webhook.
+    @http.route(
+        _callback_url,
+        type="json",
+        auth="public",
+        methods=["POST"],
+        csrf=False,
+        saveSession=False,  # No need to save the session
+    )
+    def zlpay_callback(self, **data):
+       
 
-    #     :param dict data: The notification data
-    #     :return: The response to give to ZaloPay and acknowledge the notification
-    #     """
+        _logger.info("ZaloPay callback received: %s", data)
+        result = {}
 
-    #     _logger.info("ZaloPay callback received: %s", data)
-    #     result = {}
+        try:
+            cbdata = request.jsonrequest
+            key2 = request.env['payment.provider'].search([('code', '=', 'zlpay')], limit=1).key2
 
-    #     try:
-    #         cbdata = request.jsonrequest
-    #         key2 = request.env['payment.provider'].search([('code', '=', 'zlpay')], limit=1).key2
 
-    #         # Create MAC to verify callback
-    #         mac = hmac.new(key2.encode(), cbdata['data'].encode(), hashlib.sha256).hexdigest()
+            mac = hmac.new(key2.encode(), cbdata['data'].encode(), hashlib.sha256).hexdigest()
 
-    #         # Verify MAC
-    #         if mac != cbdata['mac']:
-    #             # Invalid callback
-    #             result['return_code'] = -1
-    #             result['return_message'] = 'mac not equal'
-    #         else:
-    #             # Successful payment
-    #             dataJson = json.loads(cbdata['data'])
-    #             app_trans_id = dataJson['app_trans_id']
-    #             _logger.info("Update order's status = success where app_trans_id = %s", app_trans_id)
+            if mac != cbdata['mac']:
+            
+                result['return_code'] = -1
+                result['return_message'] = 'mac not equal'
+            else:
+                # Successful payment
+                dataJson = json.loads(cbdata['data'])
+                app_trans_id = dataJson['app_trans_id']
+                _logger.info("Update order's status = success where app_trans_id = %s", app_trans_id)
 
-    #             # Update the order status here
-    #             request.env['payment.transaction'].sudo().search([('reference', '=', app_trans_id)]).write({
-    #                 'state': 'done'
-    #             })
+                # Update the order status here
+                request.env['payment.transaction'].sudo().search([('reference', '=', app_trans_id)]).write({
+                    'state': 'done'
+                })
 
-    #             result['return_code'] = 1
-    #             result['return_message'] = 'success'
-    #     except Exception as e:
-    #         _logger.error("ZaloPay callback processing failed: %s", e)
-    #         result['return_code'] = 0  # ZaloPay server will retry the callback (up to 3 times)
-    #         result['error'] = str(e)
+                result['return_code'] = 1
+                result['return_message'] = 'success'
+        except Exception as e:
+            _logger.error("ZaloPay callback processing failed: %s", e)
+            result['return_code'] = 0  # ZaloPay server will retry the callback (up to 3 times)
+            result['error'] = str(e)
 
-    #     # Respond to ZaloPay server
-    #     return json.dumps(result)
+        # Respond to ZaloPay server
+        return json.dumps(result)
 
     # @http.route(
     #     '/payment/zlpay/status/<string:app_trans_id>',

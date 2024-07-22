@@ -10,7 +10,7 @@ import logging
 # Cấu hình
 config = {
     "app_id": 2554,
-    "key1": "sdngKKJmqEMzvh5QQcdD2A9XBSKUNaYn",
+    "key1": "sdngKKJmqEMzvh5QQcdD2A9XBSKUNaYn", 
     "key2": "trMrHtvjo6myautxDUiAcYsVtaeQ8nhf",
     "endpoint": "https://sb-openapi.zalopay.vn/v2/create"
 }
@@ -31,7 +31,7 @@ order = {
     "amount": 50000,
     "description": "Lazada - Payment for the order #" + str(transID),
     "bank_code": "",
-    "callback_url": "https://fe5b-2001-ee0-4fc2-4900-cc3e-785c-e7ca-7326.ngrok-free.app/callback",
+    "callback_url": " https://3ffe-14-169-204-243.ngrok-free.app/callback",
 }
 
 # Chuỗi dữ liệu để tạo chữ ký
@@ -72,7 +72,7 @@ def callback():
             # thanh toán thành công
             # merchant cập nhật trạng thái cho đơn hàng
             dataJson = json.loads(cbdata['data'])
-            print("giao dịch thành công " + dataJson['app_trans_id'])
+            print("giao dịch thành côngggggggg " + dataJson['app_trans_id'])
 
             result['return_code'] = 1
             result['return_message'] = 'success'

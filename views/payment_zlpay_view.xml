@@ -11,12 +11,12 @@
           <field name="key1"
             string="key1"
             required="code == 'zlpay' and state != 'disabled'"
-            
+             password="True"
           />
           <field name="key2"
             string="key2"
             required="code == 'zlpay' and state != 'disabled'"
-            
+             password="True"
           />
           <field name="appid"
             string="appid"
