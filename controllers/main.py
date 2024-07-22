@@ -32,12 +32,11 @@ class ZaloPayController(http.Controller):
         auth="public",
         methods=["POST"],
         csrf=False,
-        saveSession=False,  # No need to save the session
     )
     def zlpay_callback(self, **data):
        
 
-        _logger.info("ZaloPay callback received: %s", data)
+        _logger.info("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000: %s", data)
         result = {}
 
         try:
