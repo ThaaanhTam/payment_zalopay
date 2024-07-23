@@ -14,17 +14,17 @@ class ZaloPayController(http.Controller):
     _return_url = "/payment/zlpay/return"
     _callback_url = "/payment/zlpay/callback"
 
-    # @http.route(
-    #     _return_url,
-    #     type="http",
-    #     methods=["GET"],
-    #     auth="public",
-    #     csrf=False,
-    # )
-    # def zlpay_return_from_checkout(self, **data):
-    #     """Handle redirection after payment checkout."""
-    #     _logger.info("Handling redirection from ZaloPay.")
-    #     return request.redirect("/payment/status")
+    @http.route(
+        _return_url,
+        type="http",
+        methods=["GET"],
+        auth="public",
+        csrf=False,
+    )
+    def zlpay_return_from_checkout(self, **data):
+        """Handle redirection after payment checkout."""
+        _logger.info("Handling redirection from ZaloPay.")
+        return request.redirect("/payment/status")
 
     @http.route(
         _callback_url,
