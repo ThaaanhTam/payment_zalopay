@@ -51,7 +51,7 @@ class ZaloPayController(http.Controller):
             # Kiểm tra callback hợp lệ (đến từ ZaloPay server)
             if mac != cbdata['mac']:
                 # Callback không hợp lệ
-                # _logger.info("Không nhận được dữ liệu JSON từ ZaloPay")
+                _logger.info("Không nhận được dữ liệu JSON từ ZaloPay")
                 result['return_code'] = -1
                 result['return_message'] = 'mac not equal'
             else:
@@ -60,6 +60,13 @@ class ZaloPayController(http.Controller):
                 dataJson = json.loads(cbdata['data'])
                 app_trans_id = dataJson['app_trans_id']
                 _logger.info("Cập nhật trạng thái đơn hàng = success cho app_trans_id = %s", app_trans_id)
+              
+              
+                all_transactions = request.env['payment.transaction'].sudo().search([])
+                for tx in all_transactions:
+                    _logger.info("Giao dịch hiện có: %s với reference: %s", tx.id, tx.reference)
+
+
 
                 tx = request.env['payment.transaction'].sudo().search([('reference', '=', app_trans_id)])
                 if tx:
