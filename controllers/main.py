@@ -70,6 +70,7 @@ class ZaloPayController(http.Controller):
 
                 tx = request.env['payment.transaction'].sudo().search([('reference', '=', app_trans_id)])
                 if tx:
+                    _logger.info("kiểm tra referenceeeeeeee  %s", tx.reference)
                     tx._set_done()
                     tx._reconcile_after_done()
                     _logger.info("Đã cập nhật trạng thái đơn hàng thành công cho app_trans_id = %s", app_trans_id)
