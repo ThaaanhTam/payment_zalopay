@@ -66,9 +66,9 @@ class PaymentTransaction(models.Model):
             result = json.loads(response.read())
             _logger.info("Tạo hóa đơn thành công 2: %s", result)
             # Cập nhật trường app_trans_id
-            self.write({
-                'app_trans_id': order['app_trans_id']
-            })
+            # self.write({
+            #     'app_trans_id': order['app_trans_id']
+            # })
         except Exception as e:
             _logger.error("ZaloPay create order failed: %s", e)
             raise ValidationError(_("fffffffffffffffffffffffff: %s") % e)
