@@ -38,7 +38,8 @@ class ZaloPayController(http.Controller):
         result = {}
         logging.info("xử lý callback")
         try:
-            cbdata = request.jsonrequest
+            raw_data = request.httprequest.get_data()
+            cbdata = json.loads(raw_data)
             _logger.info("Dữ liệu callback nhận được: ")
             _logger.info("Dữ liệu callback nhận được: %s", cbdata)
             
