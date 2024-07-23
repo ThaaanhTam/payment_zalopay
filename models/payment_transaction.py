@@ -15,7 +15,7 @@ _logger = logging.getLogger(__name__)
 
 class PaymentTransaction(models.Model):
     _inherit = "payment.transaction"
-
+    app_trans_id = fields.Char(string="App Transaction ID")
     def _get_specific_rendering_values(self, processing_values):
         res = super()._get_specific_rendering_values(processing_values)
         if self.provider_code != "zlpay":
@@ -65,6 +65,10 @@ class PaymentTransaction(models.Model):
             response = urllib.request.urlopen(url="https://sb-openapi.zalopay.vn/v2/create", data=urllib.parse.urlencode(order).encode())
             result = json.loads(response.read())
             _logger.info("Tạo hóa đơn thành công 2: %s", result)
+            # Cập nhật trường app_trans_id
+            self.write({
+                'app_trans_id': order['app_trans_id']
+            })
         except Exception as e:
             _logger.error("ZaloPay create order failed: %s", e)
             raise ValidationError(_("fffffffffffffffffffffffff: %s") % e)
