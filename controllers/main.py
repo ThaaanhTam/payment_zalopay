@@ -72,7 +72,7 @@ class ZaloPayController(http.Controller):
                 # if tx:
                     tx._set_done()
                     tx._reconcile_after_done()
-                    _logger.info("Đã cập nhật trạng thái đơn hàng thành công cho app_trans_id = %s", app_trans_id)
+                    _logger.info("Đã cập nhật trạng thái đơn hàng thành công cho app_trans_id =")
                 # else:
                 #     _logger.warning("Không tìm thấy giao dịch với app_trans_id = %s", app_trans_id)
 
