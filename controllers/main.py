@@ -67,7 +67,7 @@ class ZaloPayController(http.Controller):
                     _logger.info("Giao dịch hiện có: %s với app_trans_id: %s", tx.id, tx.app_trans_id)
                     
                 tx = request.env['payment.transaction'].sudo().search([('app_trans_id', '=', app_trans_id)])
-                _logger.info(app_trans_id)
+                _logger.info(app_trans_id,"===============",tx.app_trans_id)
                 if tx:
                     tx._set_done()
                     tx._reconcile_after_done()
