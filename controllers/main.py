@@ -39,36 +39,36 @@ class ZaloPayController(http.Controller):
         logging.info("xử lý callback")
         try:
             cbdata = request.jsonrequest
-            _logger.info("Dữ liệu callback nhận được: %s", cbdata)
+            # _logger.info("Dữ liệu callback nhận được: %s", cbdata)
             
-            # zlpay_provider = request.env['payment.provider'].sudo().search([('code', '=', 'zlpay')], limit=1)
-            # key2 = zlpay_provider.key2
+            zlpay_provider = request.env['payment.provider'].sudo().search([('code', '=', 'zlpay')], limit=1)
+            key2 = zlpay_provider.key2
 
-            # mac = hmac.new(key2.encode(), cbdata['data'].encode(), hashlib.sha256).hexdigest()
+            mac = hmac.new(key2.encode(), cbdata['data'].encode(), hashlib.sha256).hexdigest()
 
-            # # Kiểm tra callback hợp lệ (đến từ ZaloPay server)
-            # if mac != cbdata['mac']:
-            #     # Callback không hợp lệ
-            #     # _logger.info("Không nhận được dữ liệu JSON từ ZaloPay")
-            #     result['return_code'] = -1
-            #     result['return_message'] = 'mac not equal'
-            # else:
-            #     # Thanh toán thành công
-            #     # Cập nhật trạng thái cho đơn hàng
-            #     dataJson = json.loads(cbdata['data'])
-            #     app_trans_id = dataJson['app_trans_id']
-            #     _logger.info("Cập nhật trạng thái đơn hàng = success cho app_trans_id = %s", app_trans_id)
+            # Kiểm tra callback hợp lệ (đến từ ZaloPay server)
+            if mac != cbdata['mac']:
+                # Callback không hợp lệ
+                # _logger.info("Không nhận được dữ liệu JSON từ ZaloPay")
+                result['return_code'] = -1
+                result['return_message'] = 'mac not equal'
+            else:
+                # Thanh toán thành công
+                # Cập nhật trạng thái cho đơn hàng
+                dataJson = json.loads(cbdata['data'])
+                app_trans_id = dataJson['app_trans_id']
+                _logger.info("Cập nhật trạng thái đơn hàng = success cho app_trans_id = %s", app_trans_id)
 
-            #     tx = request.env['payment.transaction'].sudo().search([('reference', '=', app_trans_id)])
-            #     if tx:
-            #         tx._set_done()
-            #         tx._reconcile_after_done()
-            #         _logger.info("Đã cập nhật trạng thái đơn hàng thành công cho app_trans_id = %s", app_trans_id)
-            #     else:
-            #         _logger.warning("Không tìm thấy giao dịch với app_trans_id = %s", app_trans_id)
+                tx = request.env['payment.transaction'].sudo().search([('reference', '=', app_trans_id)])
+                if tx:
+                    tx._set_done()
+                    tx._reconcile_after_done()
+                    _logger.info("Đã cập nhật trạng thái đơn hàng thành công cho app_trans_id = %s", app_trans_id)
+                else:
+                    _logger.warning("Không tìm thấy giao dịch với app_trans_id = %s", app_trans_id)
 
-            #     result['return_code'] = 1
-            #     result['return_message'] = 'success'
+                result['return_code'] = 1
+                result['return_message'] = 'success'
         except Exception as e:
             _logger.error("Xử lý callback ZaloPay thất bại: %s", e)
             result['return_code'] = 0  # ZaloPay server sẽ callback lại (tối đa 3 lần)
