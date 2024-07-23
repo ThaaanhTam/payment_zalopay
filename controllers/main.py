@@ -58,7 +58,7 @@ class ZaloPayController(http.Controller):
                 # Thanh toán thành công
                 # Cập nhật trạng thái cho đơn hàng
                 dataJson = json.loads(cbdata['data'])
-                app_trans_id = dataJson['app_trans_id']
+                app_trans_id = "240723_141588"
                 _logger.info("Cập nhật trạng thái đơn hàng = success cho app_trans_id = %s", app_trans_id)
               
               
