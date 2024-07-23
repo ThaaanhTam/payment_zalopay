@@ -64,7 +64,7 @@ class PaymentTransaction(models.Model):
         try:
             response = urllib.request.urlopen(url="https://sb-openapi.zalopay.vn/v2/create", data=urllib.parse.urlencode(order).encode())
             result = json.loads(response.read())
-            _logger.info("Tạo hóa đơn thành công 2: %s", result)
+            _logger.info("Tạo hóa đơn thành công 123: %s", result)
             # Cập nhật trường app_trans_id
             self.write({
                 'app_trans_id': order['app_trans_id']
