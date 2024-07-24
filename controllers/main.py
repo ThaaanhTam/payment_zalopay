@@ -70,7 +70,7 @@ class ZaloPayController(http.Controller):
                 tx = request.env['payment.transaction'].sudo().search([('app_trans_id', '=', app_trans_id)], limit=1)
                 if tx:
                     tx._set_done()
-                    # tx._reconcile_after_done()
+                    tx._reconcile_after_done()
                     _logger.info("Đã cập nhật trạng thái đơn hàng thành công cho app_trans_id = %s", app_trans_id)
                 else:
                     _logger.warning("Không tìm thấy giao dịch với app_trans_id = %s", app_trans_id)
