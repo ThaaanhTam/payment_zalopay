@@ -82,13 +82,15 @@ class PaymentTransaction(models.Model):
 
 
     def _get_tx_from_notification_data(self, provider_code, notification_data):
-       
+        _logger.info("Starting _get_tx_from_notification_data with provider_codeaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa: %s, notification_data: %s", provider_code, notification_data)
         tx = super()._get_tx_from_notification_data(provider_code, notification_data)
         if provider_code != "zlpay" or len(tx) == 1:
+            _logger.info("Provider code is not zlpay or transaction length is 1, returning taaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaax: %s", tx)
             return tx
 
         reference = notification_data.get("app_trans_id")
         if not reference:
+            _logger.error("ZaloPay: Received data aaaaaawith missing reference.")
             raise ValidationError(
                 "ZaloPay: " + _("Received data with missing reference.")
             )
@@ -97,9 +99,11 @@ class PaymentTransaction(models.Model):
             [("app_trans_id", "=", reference), ("provider_code", "=", "zlpay")]
         )
         if not tx:
+            _logger.error("ZaloPay: No transaction found matching reference %s.", reference)
             raise ValidationError(
                 "ZaloPay: " + _("No transaction found matching reference %s.", reference)
             )
+        _logger.info("Transaction found: %s", tx)
         return tx
     
 
