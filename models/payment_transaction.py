@@ -79,6 +79,28 @@ class PaymentTransaction(models.Model):
         }
         return rendering_values
     
+
+
+    def _get_tx_from_notification_data(self, provider_code, notification_data):
+       
+        tx = super()._get_tx_from_notification_data(provider_code, notification_data)
+        if provider_code != "zlpay" or len(tx) == 1:
+            return tx
+
+        reference = notification_data.get("app_trans_id")
+        if not reference:
+            raise ValidationError(
+                "ZaloPay: " + _("Received data with missing reference.")
+            )
+
+        tx = self.search(
+            [("app_trans_id", "=", reference), ("provider_code", "=", "zlpay")]
+        )
+        if not tx:
+            raise ValidationError(
+                "ZaloPay: " + _("No transaction found matching reference %s.", reference)
+            )
+        return tx
     
 
 
