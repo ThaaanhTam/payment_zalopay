@@ -72,10 +72,12 @@ class ZaloPayController(http.Controller):
                     tx._set_done()
                     tx._reconcile_after_done()
                     _logger.info("Đã cập nhật trạng thái đơn hàng thành công cho app_trans_id = %s", app_trans_id)
+                    result['return_code'] = 1
+                    result['return_message'] = 'success'
                 else:
                     _logger.warning("Không tìm thấy giao dịch với app_trans_id = %s", app_trans_id)
-                result['return_code'] = 1
-                result['return_message'] = 'success'
+                    result['return_code'] = -1
+                    result['return_message'] = 'Transaction not found'
         except Exception as e:
             _logger.error("Xử lý callback ZaloPay thất bại: %s", e)
             result['return_code'] = 0  # ZaloPay server sẽ callback lại (tối đa 3 lần)
