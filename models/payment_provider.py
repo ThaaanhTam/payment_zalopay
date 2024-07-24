@@ -35,36 +35,36 @@ class PaymentProviderZaloPay(models.Model):
         string="App User",
         default=lambda self: self.env.company.name
     )
-    # @api.model
-    # def _get_compatible_providers(
-    #     self, *args, currency_id=None, is_validation=False, **kwargs
-    # ):
-    #     providers = super()._get_compatible_providers(
-    #         *args, currency_id=currency_id, is_validation=is_validation, **kwargs
-    #     )
+    @api.model
+    def _get_compatible_providers(
+        self, *args, currency_id=None, is_validation=False, **kwargs
+    ):
+        providers = super()._get_compatible_providers(
+            *args, currency_id=currency_id, is_validation=is_validation, **kwargs
+        )
 
-    #     currency = self.env["res.currency"].browse(currency_id).exists()
-    #     if (
-    #         currency and currency.name not in const.SUPPORTED_CURRENCIES
-    #     ) or is_validation:
-    #         providers = providers.filtered(lambda p: p.code != "zlpay")
+        currency = self.env["res.currency"].browse(currency_id).exists()
+        if (
+            currency and currency.name not in const.SUPPORTED_CURRENCIES
+        ) or is_validation:
+            providers = providers.filtered(lambda p: p.code != "zlpay")
 
-    #     return providers
+        return providers
 
-    # def _get_supported_currencies(self):
+    def _get_supported_currencies(self):
 
-    #     supported_currencies = super()._get_supported_currencies()
-    #     if self.code == "zlpay":
-    #         supported_currencies = supported_currencies.filtered(
-    #             lambda c: c.name in const.SUPPORTED_CURRENCIES
-    #         )
-    #     return supported_currencies
+        supported_currencies = super()._get_supported_currencies()
+        if self.code == "zlpay":
+            supported_currencies = supported_currencies.filtered(
+                lambda c: c.name in const.SUPPORTED_CURRENCIES
+            )
+        return supported_currencies
     
-    # def _get_default_payment_method_codes(self):
-    #     default_codes = super()._get_default_payment_method_codes()
-    #     if self.code != "zlpay":
-    #         return default_codes
-    #     return const.DEFAULT_PAYMENT_METHODS_CODES
+    def _get_default_payment_method_codes(self):
+        default_codes = super()._get_default_payment_method_codes()
+        if self.code != "zlpay":
+            return default_codes
+        return const.DEFAULT_PAYMENT_METHODS_CODES
         
     
     
