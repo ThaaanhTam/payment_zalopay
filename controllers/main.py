@@ -21,7 +21,7 @@ class ZaloPayController(http.Controller):
         auth="public",
         csrf=False,
     )
-    def zlpay_return_from_checkout(self, **data):
+    def zalopay_return_from_checkout(self, **data):
         """Handle redirection after payment checkout."""
         _logger.info("Sau khi thanh toán sẽ vào đâyyyyyyyyyy")
         return request.redirect("/payment/status")
@@ -33,7 +33,7 @@ class ZaloPayController(http.Controller):
         methods=["POST"],
         csrf=False,
     )
-    def zlpay_callback(self):
+    def zalopay_callback(self):
         """Xử lý callback từ ZaloPay."""
         result = {}
         logging.info("xử lý callback")
@@ -44,8 +44,8 @@ class ZaloPayController(http.Controller):
             _logger.info("Dữ liệu callback nhận được: %s", cbdata)
             _logger.info(cbdata)
 
-            zlpay_provider = request.env['payment.provider'].sudo().search([('code', '=', 'zalopay')], limit=1)
-            key2 = zlpay_provider.key2
+            zalopay_provider = request.env['payment.provider'].sudo().search([('code', '=', 'zalopay')], limit=1)
+            key2 = zalopay_provider.key2
 
             mac = hmac.new(key2.encode(), cbdata['data'].encode(), hashlib.sha256).hexdigest()
 
