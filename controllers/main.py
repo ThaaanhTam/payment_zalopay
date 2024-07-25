@@ -11,8 +11,8 @@ from odoo.http import request
 _logger = logging.getLogger(__name__)
 
 class ZaloPayController(http.Controller):
-    _return_url = "/payment/zlpay/return"
-    _callback_url = "/payment/zlpay/callback"
+    _return_url = "/payment/zalopay/return"
+    _callback_url = "/payment/zalopay/callback"
 
     @http.route(
         _return_url,
@@ -44,7 +44,7 @@ class ZaloPayController(http.Controller):
             _logger.info("Dữ liệu callback nhận được: %s", cbdata)
             _logger.info(cbdata)
 
-            zlpay_provider = request.env['payment.provider'].sudo().search([('code', '=', 'zlpay')], limit=1)
+            zlpay_provider = request.env['payment.provider'].sudo().search([('code', '=', 'zalopay')], limit=1)
             key2 = zlpay_provider.key2
 
             mac = hmac.new(key2.encode(), cbdata['data'].encode(), hashlib.sha256).hexdigest()

@@ -10,8 +10,8 @@
     "author": "ThanhTam",
     "depends": ["base", "payment"],
     "data": [ # Do no change the order
-        "views/payment_zlpay_view.xml",
-        "views/payment_zlpay_template.xml",
+        "views/payment_zalopay_view.xml",
+        "views/payment_zalopay_template.xml",
         "data/payment_method_data.xml",
         "data/payment_provider_data.xml",
     ],

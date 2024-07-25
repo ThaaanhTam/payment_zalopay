@@ -9,7 +9,7 @@ import random
 
 from werkzeug import urls
 from odoo import _, api, fields, models
-from odoo.addons.payment_zlpay import const
+from odoo.addons.payment_zalopay import const
 from odoo.http import request
 _logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ class PaymentTransaction(models.Model):
     app_trans_id = fields.Char(string="App Transaction ID")
     def _get_specific_rendering_values(self, processing_values):
         res = super()._get_specific_rendering_values(processing_values)
-        if self.provider_code != "zlpay":
+        if self.provider_code != "zalopay":
             return res
 
         base_url = self.provider_id.get_base_url()
@@ -43,12 +43,12 @@ class PaymentTransaction(models.Model):
             "app_trans_id": "{:%y%m%d}_{}".format(datetime.today(), trans_id),
             "app_user": self.provider_id.app_user,
             "app_time": app_time,
-            "embed_data": json.dumps({"redirecturl": urls.url_join(base_url, '/payment/zlpay/return')}),
+            "embed_data": json.dumps({"redirecturl": urls.url_join(base_url, '/payment/zalopay/return')}),
             "item": json.dumps(order_items),
             "amount": int_amount,
             "description": f"Lazada - Payment for the order #{trans_id}",
             "bank_code": "",
-            "callback_url": urls.url_join(base_url, '/payment/zlpay/callback'),  # URL callback
+            "callback_url": urls.url_join(base_url, '/payment/zalopay/callback'),  # URL callback
         }
 
         # Chuỗi dữ liệu để tạo chữ ký
