@@ -7,7 +7,7 @@
     <field name="arch" type="xml">
       <group name="provider_credentials" position="inside">
         <group invisible="code != 'zalopay'"
-          name="zlpay_credentials">
+          name="zalopay_credentials">
           <field name="key1"
             string="key1"
             required="code == 'zalopay' and state != 'disabled'"
