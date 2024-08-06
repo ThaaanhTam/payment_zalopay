@@ -46,11 +46,13 @@ class PaymentTransaction(models.Model):
             "embed_data": json.dumps({"redirecturl": urls.url_join(base_url, '/payment/zalopay/return')}),
             "item": json.dumps(order_items),
             "amount": int_amount,
-            "description": f"Lazada - Payment for the order #{trans_id}",
+            "description": f"Nếu đọc được này thì đã lấy đc qr thành công #{trans_id}",
             "bank_code": "",
             "callback_url": urls.url_join(base_url, '/payment/zalopay/callback'),  # URL callback
         }
-
+        _logger.info("url callbackkkkkk")
+        _logger.info(urls.url_join(base_url, '/payment/zalopay/callback'))
+            
         # Chuỗi dữ liệu để tạo chữ ký
         data = "{}|{}|{}|{}|{}|{}|{}".format(
             order["app_id"], order["app_trans_id"], order["app_user"],
@@ -59,16 +61,18 @@ class PaymentTransaction(models.Model):
 
         # Tạo chữ ký (mac)
         order["mac"] = hmac.new(self.provider_id.key1.encode(), data.encode(), hashlib.sha256).hexdigest()
+        
 
         # Gửi yêu cầu tạo đơn hàng đến ZaloPay
         try:
             response = urllib.request.urlopen(url="https://sb-openapi.zalopay.vn/v2/create", data=urllib.parse.urlencode(order).encode())
             result = json.loads(response.read())
-            _logger.info("Tạo hóa đơn thành công 1111111111111111111: %s", result)
+            _logger.info("Tạo hóa đơn thành công 13: %s", result)
             # Cập nhật trường app_trans_id
             self.write({
                 'app_trans_id': order['app_trans_id']
             })
+            
         except Exception as e:
             _logger.error("ZaloPay create order failed: %s", e)
             raise ValidationError(_("fffffffffffffffffffffffff: %s") % e)
@@ -77,7 +81,12 @@ class PaymentTransaction(models.Model):
         rendering_values = {
             "api_url": result.get("order_url"),
         }
+         # Xử lý phản hồi từ ZaloPay
+        
         return rendering_values
+   
+        
+    
     
 
 
