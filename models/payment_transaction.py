@@ -48,10 +48,8 @@ class PaymentTransaction(models.Model):
             "amount": int_amount,
             "description": f"Nếu đọc được này thì đã lấy đc qr thành công #{trans_id}",
             "bank_code": "",
-            "callback_url": urls.url_join(base_url.replace('http://', 'https://'), '/payment/zalopay/callback')
-,  # URL callback
+            "callback_url": urls.url_join(base_url, '/payment/zalopay/callback'),  # URL callback
         }
-        _logger.info("url callbackkkkkk")
         _logger.info(urls.url_join(base_url, '/payment/zalopay/callback'))
             
         # Chuỗi dữ liệu để tạo chữ ký
