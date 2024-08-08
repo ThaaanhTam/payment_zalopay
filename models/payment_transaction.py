@@ -109,6 +109,7 @@ class PaymentTransaction(models.Model):
             if not record:
                 _logger.error("Không tìm thấy bản ghi với app_trans_id %s", app_trans_id)
                 return
+            
 
             if record.provider_code != 'zalopay':
                 _logger.info("Bản ghi %s không phải ZaloPay", record.id)
@@ -118,11 +119,12 @@ class PaymentTransaction(models.Model):
             if not zalopay_provider:
                 _logger.error("Không tìm thấy cấu hình ZaloPay")
                 return
+            _logger.info("tìm được")
 
             config = {
-                "app_id": zalopay_provider.zalopay_app_id,
-                "key1": zalopay_provider.key1,
-                "key2": zalopay_provider.key2,
+                "app_id": "2554",
+                "key1": "sdngKKJmqEMzvh5QQcdD2A9XBSKUNaYn",
+                "key2": "trMrHtvjo6myautxDUiAcYsVtaeQ8nhf",
                 "endpoint": "https://sb-openapi.zalopay.vn/v2/query"
             }
 
