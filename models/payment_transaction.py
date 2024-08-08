@@ -102,14 +102,14 @@ class PaymentTransaction(models.Model):
 
         
     def query_zalopay_status(self, app_trans_id):
-        _logger.info("Bắt đầu truy vấn trạng thái ZaloPay")
+        _logger.info("Bắt đầu truy vấn trạng thái ZaloPayyy")
 
         try:
             record = self.search([('app_trans_id', '=', app_trans_id)], limit=1)
             if not record:
                 _logger.error("Không tìm thấy bản ghi với app_trans_id %s", app_trans_id)
                 return
-            
+            _logger("tìm được")
 
             if record.provider_code != 'zalopay':
                 _logger.info("Bản ghi %s không phải ZaloPay", record.id)
