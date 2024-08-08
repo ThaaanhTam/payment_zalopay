@@ -26,7 +26,7 @@ class ZaloPayController(http.Controller):
     )
     def zalopay_return_from_checkout(self, **data):
         """Handle redirection after payment checkout."""
-        _logger.info("Sau khi thanh toán sẽ vào đâyyyyyyyyyy")
+        _logger.info("Sau khi thanh toán sẽ vào đây")
         return request.redirect("/payment/status")
 
     @http.route(
