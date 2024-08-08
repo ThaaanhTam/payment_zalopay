@@ -56,7 +56,7 @@ class ZaloPayController(http.Controller):
             if mac != cbdata['mac']:
                 # Callback không hợp lệ
                 _logger.info("Không nhận được dữ liệu JSON từ ZaloPay")
-                result['return_code'] = -1
+                result['return_code'] = 0
                 result['return_message'] = 'mac not equal'
             else:
                 # Thanh toán thành công
@@ -81,11 +81,11 @@ class ZaloPayController(http.Controller):
                         result['return_message'] = 'success'
                     else:
                         _logger.warning("Số tiền không khớp cho app_trans_id = %s", app_trans_id)
-                        result['return_code'] = -1
+                        result['return_code'] = 0
                         result['return_message'] = 'amount not equal'
                 else:
                     _logger.warning("Không tìm thấy giao dịch với app_trans_id = %s", app_trans_id)
-                    result['return_code'] = -1
+                    result['return_code'] = 0
                     result['return_message'] = 'Transaction not found'
         except Exception as e:
             _logger.error("Xử lý callback ZaloPay thất bại: %s", e)
