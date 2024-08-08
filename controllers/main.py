@@ -26,7 +26,7 @@ class ZaloPayController(http.Controller):
     )
     def zalopay_return_from_checkout(self, **data):
         """Handle redirection after payment checkout."""
-        _logger.info("Sau khi thanh toán sẽ vào đây")
+        _logger.info("Sau khi thanh toán sẽ vào đâyyyyyyyyyy")
         return request.redirect("/payment/status")
 
     @http.route(
@@ -64,20 +64,14 @@ class ZaloPayController(http.Controller):
                 dataJson = json.loads(cbdata['data'])
                 app_trans_id = dataJson['app_trans_id']
                 _logger.info("Cập nhật trạng thái đơn hàng = success cho app_trans_id = %s", app_trans_id)
-                amount_mac = dataJson['amount']
               
-                # all_transactions = request.env['payment.transaction'].sudo().search([])
-                # for tx in all_transactions:
-                #     _logger.info("Giao dịch hiện có: %s với app_trans_id: %s", tx.id, tx.app_trans_id)
+              
+                all_transactions = request.env['payment.transaction'].sudo().search([])
+                for tx in all_transactions:
+                    _logger.info("Giao dịch hiện có: %s với app_trans_id: %s", tx.id, tx.app_trans_id)
                  # Tìm giao dịch tương ứng với app_trans_id
                 tx = request.env['payment.transaction'].sudo().search([('app_trans_id', '=', app_trans_id)], limit=1)
                 if tx:
-                    amount_odoo = tx.amount
-                    if amount_mac!=amount_odoo:
-                        _logger.warning("So tien khong hop le")
-                        result['return_code'] = -1
-                        result['return_message'] = 'Transaction not found'
-                    
                     tx._set_done()
                     tx._reconcile_after_done()
                     _logger.info("Đã cập nhật trạng thái đơn hàng thành công cho app_trans_id = %s", app_trans_id)
@@ -94,4 +88,3 @@ class ZaloPayController(http.Controller):
         _logger.info("Kết thúc xử lý callback ZaloPay với kết quả: %s", result)
         # Thông báo kết quả cho ZaloPay server
         return result
-    
