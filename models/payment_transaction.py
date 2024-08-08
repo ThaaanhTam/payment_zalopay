@@ -6,6 +6,8 @@ import urllib.parse
 from datetime import datetime
 from time import time
 import random
+import threading
+
 
 from werkzeug import urls
 from odoo import _, api, fields, models
@@ -17,6 +19,14 @@ class PaymentTransaction(models.Model):
     _inherit = "payment.transaction"
     app_trans_id = fields.Char(string="App Transaction ID")
     zalopay_amount = fields.Integer(string="ZaloPay Amount")
+    last_status_check = fields.Datetime(string="Last Status Check")
+    status = fields.Selection([
+        ('pending', 'Pending'),
+        ('paid', 'Paid'),
+        ('failed', 'Failed')
+    ], string="Payment Status", default='pending')
+    payment_creation_time = fields.Datetime(string="Payment Creation Time")
+
     def _get_specific_rendering_values(self, processing_values):
         res = super()._get_specific_rendering_values(processing_values)
         if self.provider_code != "zalopay":
@@ -72,8 +82,12 @@ class PaymentTransaction(models.Model):
             # Cập nhật trường app_trans_id
             self.write({
                 'app_trans_id': order['app_trans_id'],
-                'zalopay_amount': int_amount
+                'zalopay_amount': int_amount,
+                'last_status_check': fields.Datetime.now()
             })
+
+           
+            threading.Timer(60, self.query_zalopay_status).start()
             
         except Exception as e:
             _logger.error("ZaloPay create order failed: %s", e)
@@ -86,9 +100,46 @@ class PaymentTransaction(models.Model):
          # Xử lý phản hồi từ ZaloPay
         
         return rendering_values
-   
+
         
-    
+    def query_zalopay_status(self):
+        self.ensure_one()
+        if self.provider_code != 'zalopay' or not self.app_trans_id:
+            return
+
+        zalopay_provider = self.env['payment.provider'].sudo().search([('code', '=', 'zalopay')], limit=1)
+        
+        config = {
+            "app_id": zalopay_provider.zalopay_app_id,
+            "key1": zalopay_provider.key1,
+            "key2": zalopay_provider.key2,
+            "endpoint": "https://sb-openapi.zalopay.vn/v2/query"
+        }
+
+        params = {
+            "app_id": config["app_id"],
+            "app_trans_id": self.app_trans_id
+        }
+
+        data = "{}|{}|{}".format(config["app_id"], params["app_trans_id"], config["key1"])
+        params["mac"] = hmac.new(config['key1'].encode(), data.encode(), hashlib.sha256).hexdigest()
+
+        try:
+            response = urllib.request.urlopen(url=config["endpoint"], data=urllib.parse.urlencode(params).encode())
+            result = json.loads(response.read())
+
+            _logger.info("ZaloPay query result for app_trans_id %s: %s", self.app_trans_id, result)
+
+            if result.get("return_code") == 1:  # Kiểm tra xem giao dịch thành công hay không
+                status = result.get("status")
+                if status == 1:  # Giao dịch đã thanh toán thành công
+                    self.write({'status': 'paid'})
+                elif status == -1:  # Giao dịch thất bại
+                    self.write({'status': 'failed'})
+                self.write({'last_status_check': fields.Datetime.now()})
+
+        except Exception as e:
+            _logger.error("Error querying ZaloPay payment status: %s", str(e))
 
 
     

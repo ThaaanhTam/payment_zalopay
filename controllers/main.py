@@ -13,6 +13,7 @@ _logger = logging.getLogger(__name__)
 class ZaloPayController(http.Controller):
     _return_url = "/payment/zalopay/return"
     _callback_url = "/payment/zalopay/callback"
+    
 
 
 
@@ -56,7 +57,7 @@ class ZaloPayController(http.Controller):
             if mac != cbdata['mac']:
                 # Callback không hợp lệ
                 _logger.info("Không nhận được dữ liệu JSON từ ZaloPay")
-                result['return_code'] = 0
+                result['return_code'] = -1
                 result['return_message'] = 'mac not equal'
             else:
                 # Thanh toán thành công
@@ -71,7 +72,7 @@ class ZaloPayController(http.Controller):
                 # for tx in all_transactions:
                 #     _logger.info("Giao dịch hiện có: %s với app_trans_id: %s", tx.id, tx.app_trans_id)
                  # Tìm giao dịch tương ứng với app_trans_id
-                tx = request.env['payment.transaction'].sudo().search([('app_trans_id', '=', 2)], limit=1)
+                tx = request.env['payment.transaction'].sudo().search([('app_trans_id', '=', app_trans_id)], limit=1)
                 if tx:
                     if int(tx.amount) == int(amount):
                         tx._set_done()
@@ -81,11 +82,11 @@ class ZaloPayController(http.Controller):
                         result['return_message'] = 'success'
                     else:
                         _logger.warning("Số tiền không khớp cho app_trans_id = %s", app_trans_id)
-                        result['return_code'] = 0
+                        result['return_code'] = -1
                         result['return_message'] = 'amount not equal'
                 else:
                     _logger.warning("Không tìm thấy giao dịch với app_trans_id = %s", app_trans_id)
-                    result['return_code'] = 0
+                    result['return_code'] = -1
                     result['return_message'] = 'Transaction not found'
         except Exception as e:
             _logger.error("Xử lý callback ZaloPay thất bại: %s", e)
