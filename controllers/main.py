@@ -13,7 +13,7 @@ _logger = logging.getLogger(__name__)
 class ZaloPayController(http.Controller):
     _return_url = "/payment/zalopay/return"
     _callback_url = "/payment/zalopay/callback"
-    
+    _max_retry_count = 0
 
 
     @http.route('/payment/zalopay/status', type='http', auth='public', methods=['GET'], website=True)
@@ -95,7 +95,7 @@ class ZaloPayController(http.Controller):
                 # for tx in all_transactions:
                 #     _logger.info("Giao dịch hiện có: %s với app_trans_id: %s", tx.id, tx.app_trans_id)
                  # Tìm giao dịch tương ứng với app_trans_id
-                tx = request.env['payment.transaction'].sudo().search([('app_trans_id', '=', app_trans_id)], limit=1)
+                tx = request.env['payment.transaction'].sudo().search([('app_trxans_id', '=', app_trans_id)], limit=1)
                 if tx:
                     if int(tx.amount) == int(amount):
                         tx._set_done()
@@ -115,6 +115,13 @@ class ZaloPayController(http.Controller):
             _logger.error("Xử lý callback ZaloPay thất bại: %s", e)
             result['return_code'] = 0  # ZaloPay server sẽ callback lại (tối đa 3 lần)
             result['e'] = str(e)
+            result['retry_count'] = getattr(self, '_retry_count', 0) + 1
+            setattr(self, '_retry_count', result['retry_count'])
+
+            if result['retry_count'] > self._max_retry_count:
+                # Gọi API truy vấn trạng thái thanh toán
+                app_trans_id = dataJson['app_trans_id']
+                self.query_zalopay_status(app_trans_id)
         _logger.info("Kết thúc xử lý callback ZaloPay với kết quả: %s", result)
         # Thông báo kết quả cho ZaloPay server
         return request.make_response(json.dumps(result), headers={'Content-Type': 'application/json'})
