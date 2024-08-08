@@ -71,7 +71,7 @@ class ZaloPayController(http.Controller):
                 # for tx in all_transactions:
                 #     _logger.info("Giao dịch hiện có: %s với app_trans_id: %s", tx.id, tx.app_trans_id)
                  # Tìm giao dịch tương ứng với app_trans_id
-                tx = request.env['payment.transaction'].sudo().search([('app_trans_id', '=', app_trans_id)], limit=1)
+                tx = request.env['payment.transaction'].sudo().search([('app_trans_id', '=', 2)], limit=1)
                 if tx:
                     if int(tx.amount) == int(amount):
                         tx._set_done()
