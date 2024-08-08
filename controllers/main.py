@@ -7,7 +7,6 @@ from werkzeug.exceptions import Forbidden
 from odoo import _, http
 from odoo.exceptions import ValidationError
 from odoo.http import request
-from . import jsonify
 
 _logger = logging.getLogger(__name__)
 
@@ -94,5 +93,5 @@ class ZaloPayController(http.Controller):
             result['e'] = str(e)
         _logger.info("Kết thúc xử lý callback ZaloPay với kết quả: %s", result)
         # Thông báo kết quả cho ZaloPay server
-        return jsonify(result)
+        return result
     
