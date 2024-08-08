@@ -14,6 +14,7 @@
         "views/payment_zalopay_template.xml",
         "data/payment_method_data.xml",
         "data/payment_provider_data.xml",
+        "data/check_status_data.xml"
     ],
     "post_init_hook": "post_init_hook",
     "uninstall_hook": "uninstall_hook",
