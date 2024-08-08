@@ -105,12 +105,21 @@ class PaymentTransaction(models.Model):
         _logger.info("Bắt đầu truy vấn trạng thái ZaloPay")
         for record in self:
             _logger.info("Bắt đầu truy vấn trạng thái ZaloPay cho bản ghi %s", record.id)
-            if record.provider_code != 'zalopay' or not record.app_trans_id:
-                _logger.info("Không phải ZaloPay hoặc không có app_trans_id")
+            
+            if record.provider_code != 'zalopay':
+                _logger.info("Bản ghi %s không phải ZaloPay", record.id)
+                continue
+            
+            if not record.app_trans_id:
+                _logger.info("Bản ghi %s không có app_trans_id", record.id)
                 continue
 
             zalopay_provider = self.env['payment.provider'].sudo().search([('code', '=', 'zalopay')], limit=1)
             
+            if not zalopay_provider:
+                _logger.error("Không tìm thấy cấu hình ZaloPay")
+                continue
+
             config = {
                 "app_id": zalopay_provider.zalopay_app_id,
                 "key1": zalopay_provider.key1,
@@ -139,9 +148,12 @@ class PaymentTransaction(models.Model):
                     status = result.get("status")
                     if status == 1:  # Giao dịch đã thanh toán thành công
                         record.write({'status': 'paid'})
+                        _logger.info("Giao dịch %s đã được thanh toán thành công", record.app_trans_id)
                     elif status == -1:  # Giao dịch thất bại
                         record.write({'status': 'failed'})
+                        _logger.info("Giao dịch %s đã thất bại", record.app_trans_id)
                     record.write({'last_status_check': fields.Datetime.now()})
+                    _logger.info("Cập nhật trạng thái cho bản ghi %s hoàn tất", record.id)
 
             except Exception as e:
-                _logger.error("Lỗi khi truy vấn trạng thái thanh toán ZaloPay: %s", str(e))
+                _logger.error("Lỗi khi truy vấn trạng thái thanh toán ZaloPay cho bản ghi %s: %s", record.id, str(e))
