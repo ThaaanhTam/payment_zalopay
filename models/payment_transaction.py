@@ -16,6 +16,7 @@ _logger = logging.getLogger(__name__)
 class PaymentTransaction(models.Model):
     _inherit = "payment.transaction"
     app_trans_id = fields.Char(string="App Transaction ID")
+    zalopay_amount = fields.Integer(string="ZaloPay Amount")
     def _get_specific_rendering_values(self, processing_values):
         res = super()._get_specific_rendering_values(processing_values)
         if self.provider_code != "zalopay":
@@ -69,7 +70,8 @@ class PaymentTransaction(models.Model):
             _logger.info("Tạo hóa đơn thành công 13: %s", result)
             # Cập nhật trường app_trans_id
             self.write({
-                'app_trans_id': order['app_trans_id']
+                'app_trans_id': order['app_trans_id'],
+                'zalopay_amount': int_amount
             })
             
         except Exception as e:
