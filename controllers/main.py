@@ -13,11 +13,7 @@ _logger = logging.getLogger(__name__)
 class ZaloPayController(http.Controller):
     _return_url = "/payment/zalopay/return"
     _callback_url = "/payment/zalopay/callback"
-    
-
-
-
-    
+        
     @http.route(
         _return_url,
         type="http",

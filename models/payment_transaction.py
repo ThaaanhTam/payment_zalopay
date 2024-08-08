@@ -3,7 +3,7 @@ import json
 import hmac
 import hashlib
 import urllib.parse
-from datetime import datetime
+from datetime import datetime,timedelta
 from time import time
 import random
 import threading
@@ -25,7 +25,7 @@ class PaymentTransaction(models.Model):
         ('paid', 'Paid'),
         ('failed', 'Failed')
     ], string="Payment Status", default='pending')
-    payment_creation_time = fields.Datetime(string="Payment Creation Time")
+    next_check = fields.Datetime(string="Next Status Check")
 
     def _get_specific_rendering_values(self, processing_values):
         res = super()._get_specific_rendering_values(processing_values)
@@ -83,12 +83,11 @@ class PaymentTransaction(models.Model):
             self.write({
                 'app_trans_id': order['app_trans_id'],
                 'zalopay_amount': int_amount,
-                'last_status_check': fields.Datetime.now()
+                'last_status_check': fields.Datetime.now(),
+                'next_check': fields.Datetime.now() + timedelta(minutes=15)
             })
 
-           
-            threading.Timer(20, self.query_zalopay_status).start()
-            
+        
         except Exception as e:
             _logger.error("ZaloPay create order failed: %s", e)
             raise ValidationError(_("fffffffffffffffffffffffff: %s") % e)
@@ -145,11 +144,3 @@ class PaymentTransaction(models.Model):
 
         except Exception as e:
             _logger.error("Lỗi khi truy vấn trạng thái thanh toán ZaloPay: %s", str(e))
-
-
-    
-
-    
-    
-
-
