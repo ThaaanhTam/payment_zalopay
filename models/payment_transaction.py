@@ -103,28 +103,27 @@ class PaymentTransaction(models.Model):
         
     def query_zalopay_status(self, app_trans_id):
         _logger.info("Bắt đầu truy vấn trạng thái ZaloPayyy")
-
         try:
-            record = self.search([('app_trans_id', '=', app_trans_id)], limit=1)
-            if not record:
-                _logger.error("Không tìm thấy bản ghi với app_trans_id %s", app_trans_id)
-                return
-            _logger("tìm được")
+            _logger.info("vô")
+            # record = request.env['payment.transaction'].sudo().search([('app_trans_id', '=', app_trans_id)], limit=1)
+            # if not record:
+            #     _logger.error("Không tìm thấy bản ghi với app_trans_id %s", app_trans_id)
+            #     return
+            # _logger("tìm được")
 
-            if record.provider_code != 'zalopay':
-                _logger.info("Bản ghi %s không phải ZaloPay", record.id)
-                return
+            # if record.provider_code != 'zalopay':
+            #     _logger.info("Bản ghi %s không phải ZaloPay", record.id)
+            #     return
 
-            zalopay_provider = self.env['payment.provider'].sudo().search([('code', '=', 'zalopay')], limit=1)
-            if not zalopay_provider:
-                _logger.error("Không tìm thấy cấu hình ZaloPay")
-                return
-            _logger.info("tìm được")
+            # zalopay_provider = self.env['payment.provider'].sudo().search([('code', '=', 'zalopay')], limit=1)
+            # if not zalopay_provider:
+            #     _logger.error("Không tìm thấy cấu hình ZaloPay")
+            #     return
+            # _logger.info("tìm được")
 
             config = {
                 "app_id": "2554",
                 "key1": "sdngKKJmqEMzvh5QQcdD2A9XBSKUNaYn",
-                "key2": "trMrHtvjo6myautxDUiAcYsVtaeQ8nhf",
                 "endpoint": "https://sb-openapi.zalopay.vn/v2/query"
             }
 
@@ -144,16 +143,16 @@ class PaymentTransaction(models.Model):
 
             _logger.info("Kết quả truy vấn ZaloPay cho app_trans_id %s: %s", app_trans_id, result)
 
-            if result.get("return_code") == 1:  # Kiểm tra xem giao dịch thành công hay không
-                status = result.get("status")
-                if status == 1:  # Giao dịch đã thanh toán thành công
-                    record.write({'status': 'paid'})
-                    _logger.info("Giao dịch %s đã được thanh toán thành công", app_trans_id)
-                elif status == -1:  # Giao dịch thất bại
-                    record.write({'status': 'failed'})
-                    _logger.info("Giao dịch %s đã thất bại", app_trans_id)
-                record.write({'last_status_check': fields.Datetime.now()})
-                _logger.info("Cập nhật trạng thái cho bản ghi %s hoàn tất", record.id)
+            # if result.get("return_code") == 1:  # Kiểm tra xem giao dịch thành công hay không
+            #     status = result.get("status")
+            #     if status == 1:  # Giao dịch đã thanh toán thành công
+            #         record.write({'status': 'paid'})
+            #         _logger.info("Giao dịch %s đã được thanh toán thành công", app_trans_id)
+            #     elif status == -1:  # Giao dịch thất bại
+            #         record.write({'status': 'failed'})
+            #         _logger.info("Giao dịch %s đã thất bại", app_trans_id)
+            #     record.write({'last_status_check': fields.Datetime.now()})
+            #     _logger.info("Cập nhật trạng thái cho bản ghi %s hoàn tất", record.id)
 
         except Exception as e:
             _logger.error("Lỗi khi truy vấn trạng thái thanh toán ZaloPay cho app_trans_id %s: %s", app_trans_id, str(e))

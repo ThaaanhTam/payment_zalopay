@@ -13,7 +13,34 @@ _logger = logging.getLogger(__name__)
 class ZaloPayController(http.Controller):
     _return_url = "/payment/zalopay/return"
     _callback_url = "/payment/zalopay/callback"
-        
+    
+
+
+    @http.route('/payment/zalopay/status', type='http', auth='public', methods=['GET'], website=True)
+    def query_zalopay_status(self, app_trans_id=None, **kw):
+        if not app_trans_id:
+            return request.render('payment_zalopay.zalopay_status_error', {
+                'error_message': 'app_trans_id is required'
+            })
+
+        try:
+            transaction = request.env['payment.transaction'].sudo().search([('app_trans_id', '=', app_trans_id)], limit=1)
+            if transaction:
+                # Xử lý trạng thái giao dịch ở đây
+                _logger.info("Giao dịch tìm thấy: ID = %s, app_trans_id = %s", transaction.id, transaction.app_trans_id)
+                return request.render('payment_zalopay.zalopay_status_success', {
+                    'transaction': transaction
+                })
+            else:
+                _logger.info("Không tìm thấy giao dịch với app_trans_id = %s", app_trans_id)
+                return request.render('payment_zalopay.zalopay_status_error', {
+                    'error_message': f'Không tìm thấy giao dịch với app_trans_id = {app_trans_id}'
+                })
+        except Exception as e:
+            _logger.error("Lỗi khi truy vấn trạng thái thanh toán ZaloPay cho app_trans_id %s: %s", app_trans_id, str(e))
+            return request.render('payment_zalopay.zalopay_status_error', {
+                'error_message': f'Lỗi khi truy vấn trạng thái thanh toán: {str(e)}'
+            })
     @http.route(
         _return_url,
         type="http",
