@@ -86,7 +86,7 @@ class PaymentTransaction(models.Model):
                 'last_status_check': fields.Datetime.now(),
                 'next_check': fields.Datetime.now() + timedelta(minutes=15)
             })
-
+            threading.Timer(900, self.query_zalopay_status, args=[order['app_trans_id']]).start()
         
         except Exception as e:
             _logger.error("ZaloPay create order failed: %s", e)
@@ -101,59 +101,57 @@ class PaymentTransaction(models.Model):
         return rendering_values
 
         
-    def query_zalopay_status(self):
+    def query_zalopay_status(self, app_trans_id):
         _logger.info("Bắt đầu truy vấn trạng thái ZaloPay")
-        for record in self:
-            _logger.info("Bắt đầu truy vấn trạng thái ZaloPay cho bản ghi %s", record.id)
-            
-            if record.provider_code != 'zalopay':
-                _logger.info("Bản ghi %s không phải ZaloPay", record.id)
-                continue
-            
-            if not record.app_trans_id:
-                _logger.info("Bản ghi %s không có app_trans_id", record.id)
-                continue
 
-            zalopay_provider = self.env['payment.provider'].sudo().search([('code', '=', 'zalopay')], limit=1)
-            
-            if not zalopay_provider:
-                _logger.error("Không tìm thấy cấu hình ZaloPay")
-                continue
+        record = self.search([('app_trans_id', '=', app_trans_id)], limit=1)
+        if not record:
+            _logger.error("Không tìm thấy bản ghi với app_trans_id %s", app_trans_id)
+            return
 
-            config = {
-                "app_id": zalopay_provider.zalopay_app_id,
-                "key1": zalopay_provider.key1,
-                "key2": zalopay_provider.key2,
-                "endpoint": "https://sb-openapi.zalopay.vn/v2/query"
-            }
+        if record.provider_code != 'zalopay':
+            _logger.info("Bản ghi %s không phải ZaloPay", record.id)
+            return
 
-            params = {
-                "app_id": config["app_id"],
-                "app_trans_id": record.app_trans_id
-            }
+        zalopay_provider = self.env['payment.provider'].sudo().search([('code', '=', 'zalopay')], limit=1)
+        if not zalopay_provider:
+            _logger.error("Không tìm thấy cấu hình ZaloPay")
+            return
 
-            data = "{}|{}|{}".format(config["app_id"], params["app_trans_id"], config["key1"])
-            params["mac"] = hmac.new(config['key1'].encode(), data.encode(), hashlib.sha256).hexdigest()
+        config = {
+            "app_id": zalopay_provider.zalopay_app_id,
+            "key1": zalopay_provider.key1,
+            "key2": zalopay_provider.key2,
+            "endpoint": "https://sb-openapi.zalopay.vn/v2/query"
+        }
 
-            _logger.info("Dữ liệu truy vấn: %s", params)
-            _logger.info("Chữ ký (mac) truy vấn: %s", params["mac"])
+        params = {
+            "app_id": config["app_id"],
+            "app_trans_id": app_trans_id
+        }
 
-            try:
-                response = urllib.request.urlopen(url=config["endpoint"], data=urllib.parse.urlencode(params).encode())
-                result = json.loads(response.read())
+        data = "{}|{}|{}".format(config["app_id"], params["app_trans_id"], config["key1"])
+        params["mac"] = hmac.new(config['key1'].encode(), data.encode(), hashlib.sha256).hexdigest()
 
-                _logger.info("Kết quả truy vấn ZaloPay cho app_trans_id %s: %s", record.app_trans_id, result)
+        _logger.info("Dữ liệu truy vấn: %s", params)
+        _logger.info("Chữ ký (mac) truy vấn: %s", params["mac"])
 
-                if result.get("return_code") == 1:  # Kiểm tra xem giao dịch thành công hay không
-                    status = result.get("status")
-                    if status == 1:  # Giao dịch đã thanh toán thành công
-                        record.write({'status': 'paid'})
-                        _logger.info("Giao dịch %s đã được thanh toán thành công", record.app_trans_id)
-                    elif status == -1:  # Giao dịch thất bại
-                        record.write({'status': 'failed'})
-                        _logger.info("Giao dịch %s đã thất bại", record.app_trans_id)
-                    record.write({'last_status_check': fields.Datetime.now()})
-                    _logger.info("Cập nhật trạng thái cho bản ghi %s hoàn tất", record.id)
+        try:
+            response = urllib.request.urlopen(url=config["endpoint"], data=urllib.parse.urlencode(params).encode())
+            result = json.loads(response.read())
 
-            except Exception as e:
-                _logger.error("Lỗi khi truy vấn trạng thái thanh toán ZaloPay cho bản ghi %s: %s", record.id, str(e))
+            _logger.info("Kết quả truy vấn ZaloPay cho app_trans_id %s: %s", app_trans_id, result)
+
+            if result.get("return_code") == 1:  # Kiểm tra xem giao dịch thành công hay không
+                status = result.get("status")
+                if status == 1:  # Giao dịch đã thanh toán thành công
+                    record.write({'status': 'paid'})
+                    _logger.info("Giao dịch %s đã được thanh toán thành công", app_trans_id)
+                elif status == -1:  # Giao dịch thất bại
+                    record.write({'status': 'failed'})
+                    _logger.info("Giao dịch %s đã thất bại", app_trans_id)
+                record.write({'last_status_check': fields.Datetime.now()})
+                _logger.info("Cập nhật trạng thái cho bản ghi %s hoàn tất", record.id)
+
+        except Exception as e:
+            _logger.error("Lỗi khi truy vấn trạng thái thanh toán ZaloPay cho app_trans_id %s: %s", app_trans_id, str(e))
