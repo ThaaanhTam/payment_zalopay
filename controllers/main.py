@@ -45,7 +45,7 @@ class ZaloPayController(http.Controller):
             cbdata = json.loads(raw_data)
             _logger.info("Dữ liệu callback nhận được: ")
             _logger.info("Dữ liệu callback nhận được: %s", cbdata)
-            _logger.info(cbdata)
+            _logger.info(raw_data)
 
             zalopay_provider = request.env['payment.provider'].sudo().search([('code', '=', 'zalopay')], limit=1)
             key2 = zalopay_provider.key2
