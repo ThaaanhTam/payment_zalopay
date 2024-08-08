@@ -87,7 +87,7 @@ class PaymentTransaction(models.Model):
             })
 
            
-            threading.Timer(60, self.query_zalopay_status).start()
+            threading.Timer(20, self.query_zalopay_status).start()
             
         except Exception as e:
             _logger.error("ZaloPay create order failed: %s", e)
@@ -103,8 +103,10 @@ class PaymentTransaction(models.Model):
 
         
     def query_zalopay_status(self):
+        _logger.info("Bắt đầu truy vấn trạng thái ZaloPay")
         self.ensure_one()
         if self.provider_code != 'zalopay' or not self.app_trans_id:
+            _logger.info("Không phải ZaloPay hoặc không có app_trans_id")
             return
 
         zalopay_provider = self.env['payment.provider'].sudo().search([('code', '=', 'zalopay')], limit=1)
@@ -124,11 +126,14 @@ class PaymentTransaction(models.Model):
         data = "{}|{}|{}".format(config["app_id"], params["app_trans_id"], config["key1"])
         params["mac"] = hmac.new(config['key1'].encode(), data.encode(), hashlib.sha256).hexdigest()
 
+        _logger.info("Dữ liệu truy vấn: %s", params)
+        _logger.info("Chữ ký (mac) truy vấn: %s", params["mac"])
+
         try:
             response = urllib.request.urlopen(url=config["endpoint"], data=urllib.parse.urlencode(params).encode())
             result = json.loads(response.read())
 
-            _logger.info("ZaloPay query result for app_trans_id %s: %s", self.app_trans_id, result)
+            _logger.info("Kết quả truy vấn ZaloPay cho app_trans_id %s: %s", self.app_trans_id, result)
 
             if result.get("return_code") == 1:  # Kiểm tra xem giao dịch thành công hay không
                 status = result.get("status")
@@ -139,7 +144,7 @@ class PaymentTransaction(models.Model):
                 self.write({'last_status_check': fields.Datetime.now()})
 
         except Exception as e:
-            _logger.error("Error querying ZaloPay payment status: %s", str(e))
+            _logger.error("Lỗi khi truy vấn trạng thái thanh toán ZaloPay: %s", str(e))
 
 
     
