@@ -93,5 +93,5 @@ class ZaloPayController(http.Controller):
             result['e'] = str(e)
         _logger.info("Kết thúc xử lý callback ZaloPay với kết quả: %s", result)
         # Thông báo kết quả cho ZaloPay server
-        return result
+        return request.make_response(json.dumps(result), headers={'Content-Type': 'application/json'})
     
