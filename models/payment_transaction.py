@@ -103,44 +103,45 @@ class PaymentTransaction(models.Model):
         
     def query_zalopay_status(self):
         _logger.info("Bắt đầu truy vấn trạng thái ZaloPay")
-        self.ensure_one()
-        if self.provider_code != 'zalopay' or not self.app_trans_id:
-            _logger.info("Không phải ZaloPay hoặc không có app_trans_id")
-            return
+        for record in self:
+            _logger.info("Bắt đầu truy vấn trạng thái ZaloPay cho bản ghi %s", record.id)
+            if record.provider_code != 'zalopay' or not record.app_trans_id:
+                _logger.info("Không phải ZaloPay hoặc không có app_trans_id")
+                continue
 
-        zalopay_provider = self.env['payment.provider'].sudo().search([('code', '=', 'zalopay')], limit=1)
-        
-        config = {
-            "app_id": zalopay_provider.zalopay_app_id,
-            "key1": zalopay_provider.key1,
-            "key2": zalopay_provider.key2,
-            "endpoint": "https://sb-openapi.zalopay.vn/v2/query"
-        }
+            zalopay_provider = self.env['payment.provider'].sudo().search([('code', '=', 'zalopay')], limit=1)
+            
+            config = {
+                "app_id": zalopay_provider.zalopay_app_id,
+                "key1": zalopay_provider.key1,
+                "key2": zalopay_provider.key2,
+                "endpoint": "https://sb-openapi.zalopay.vn/v2/query"
+            }
 
-        params = {
-            "app_id": config["app_id"],
-            "app_trans_id": self.app_trans_id
-        }
+            params = {
+                "app_id": config["app_id"],
+                "app_trans_id": record.app_trans_id
+            }
 
-        data = "{}|{}|{}".format(config["app_id"], params["app_trans_id"], config["key1"])
-        params["mac"] = hmac.new(config['key1'].encode(), data.encode(), hashlib.sha256).hexdigest()
+            data = "{}|{}|{}".format(config["app_id"], params["app_trans_id"], config["key1"])
+            params["mac"] = hmac.new(config['key1'].encode(), data.encode(), hashlib.sha256).hexdigest()
 
-        _logger.info("Dữ liệu truy vấn: %s", params)
-        _logger.info("Chữ ký (mac) truy vấn: %s", params["mac"])
+            _logger.info("Dữ liệu truy vấn: %s", params)
+            _logger.info("Chữ ký (mac) truy vấn: %s", params["mac"])
 
-        try:
-            response = urllib.request.urlopen(url=config["endpoint"], data=urllib.parse.urlencode(params).encode())
-            result = json.loads(response.read())
+            try:
+                response = urllib.request.urlopen(url=config["endpoint"], data=urllib.parse.urlencode(params).encode())
+                result = json.loads(response.read())
 
-            _logger.info("Kết quả truy vấn ZaloPay cho app_trans_id %s: %s", self.app_trans_id, result)
+                _logger.info("Kết quả truy vấn ZaloPay cho app_trans_id %s: %s", record.app_trans_id, result)
 
-            if result.get("return_code") == 1:  # Kiểm tra xem giao dịch thành công hay không
-                status = result.get("status")
-                if status == 1:  # Giao dịch đã thanh toán thành công
-                    self.write({'status': 'paid'})
-                elif status == -1:  # Giao dịch thất bại
-                    self.write({'status': 'failed'})
-                self.write({'last_status_check': fields.Datetime.now()})
+                if result.get("return_code") == 1:  # Kiểm tra xem giao dịch thành công hay không
+                    status = result.get("status")
+                    if status == 1:  # Giao dịch đã thanh toán thành công
+                        record.write({'status': 'paid'})
+                    elif status == -1:  # Giao dịch thất bại
+                        record.write({'status': 'failed'})
+                    record.write({'last_status_check': fields.Datetime.now()})
 
-        except Exception as e:
-            _logger.error("Lỗi khi truy vấn trạng thái thanh toán ZaloPay: %s", str(e))
+            except Exception as e:
+                _logger.error("Lỗi khi truy vấn trạng thái thanh toán ZaloPay: %s", str(e))

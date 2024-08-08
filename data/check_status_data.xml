@@ -7,7 +7,7 @@
         <field name="code">model.query_zalopay_status()</field>
         <field name="interval_number">1</field>
         <field name="interval_type">minutes</field>
-        <field name="numbercall">1</field>
+        <field name="numbercall">-1</field>
         <field name="active">True</field>
         <!-- <field name="domain_force">[('next_check', '&gt;', now()), ('status', '=', 'pending')]</field> -->
     </record>
