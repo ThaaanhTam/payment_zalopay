@@ -32,7 +32,8 @@ class PaymentTransaction(models.Model):
         if self.provider_code != "zalopay":
             return res
 
-        base_url = self.provider_id.get_base_url()
+        # base_url = self.provider_id.get_base_url()
+        base_url = self.env['ir.config_parameter'].get_param('web.base.url')
         int_amount = int(self.amount)
 
         # Tạo ID giao dịch và thời gian hiện tại
