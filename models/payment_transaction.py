@@ -81,12 +81,9 @@ class PaymentTransaction(models.Model):
             _logger.info(urllib.parse.urlencode(order).encode())
             result = json.loads(response.read())
             _logger.info("Tạo hóa đơn thành công 13: %s", result)
-            utc_now = datetime.now(pytz.UTC).replace(tzinfo=None)
-            formatted_utc_now = utc_now.strftime('%Y-%m-%d %H:%M:%S')
-
-            _logger.info("Formatted UTC time: %s", formatted_utc_now)
-            current_datetime = fields.Datetime.context_timestamp(self, utc_now).replace(tzinfo=None)
-            _logger.info("nowwwwwww %s, utc_now %s",fields.Datetime.now(), utc_now)
+            utc_now = datetime.now(pytz.timezone("Etc/GMT-7")).replace(tzinfo=None)
+            
+            # current_datetime = fields.Datetime.context_timestamp(self, utc_now).replace(tzinfo=None)
             # Cập nhật trường app_trans_id
             self.write({
                 'app_trans_id': order['app_trans_id'],
@@ -163,7 +160,7 @@ class PaymentTransaction(models.Model):
         transactions = self.search([
             ('provider_code', '=', 'zalopay'),
             ('status', '=', 'pending'),
-            ('next_check', '<=', fields.Datetime.now())  # Chỉ lấy các giao dịch cần kiểm tra
+            ('next_check', '<=', datetime.now(pytz.timezone("Etc/GMT-7")).replace(tzinfo=None))  # Chỉ lấy các giao dịch cần kiểm tra
         ])
         
         for tx in transactions:
