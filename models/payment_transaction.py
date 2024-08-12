@@ -162,7 +162,7 @@ class PaymentTransaction(models.Model):
         transactions = self.search([
             ('provider_code', '=', 'zalopay'),
             ('status', '=', 'pending'),
-            ('next_check', '<=', datetime.now(pytz.timezone("Etc/GMT-7")).replace(tzinfo=None))  # Chỉ lấy các giao dịch cần kiểm tra
+            ('next_check', '<=', datetime.now())  # Chỉ lấy các giao dịch cần kiểm tra
         ])
         
         for tx in transactions:
