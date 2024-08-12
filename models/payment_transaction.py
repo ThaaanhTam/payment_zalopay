@@ -159,10 +159,11 @@ class PaymentTransaction(models.Model):
 
     @api.model
     def cron_check_zalopay_status(self):
+        _logger.info("chạy cronnnnnnnnnnnnn")
         transactions = self.search([
             ('provider_code', '=', 'zalopay'),
             ('status', '=', 'pending'),
-            ('next_check', '<=', datetime.now())  # Chỉ lấy các giao dịch cần kiểm tra
+            ('next_check', '<=', datetime.now(pytz.timezone("Etc/GMT-7")).replace(tzinfo=None))  # Chỉ lấy các giao dịch cần kiểm tra
         ])
         
         for tx in transactions:
