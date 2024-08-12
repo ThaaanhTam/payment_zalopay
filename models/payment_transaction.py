@@ -6,6 +6,7 @@ import urllib.parse
 from datetime import datetime,timedelta
 from time import time
 import random
+import pytz
 import threading
 
 
@@ -81,11 +82,13 @@ class PaymentTransaction(models.Model):
             result = json.loads(response.read())
             _logger.info("Tạo hóa đơn thành công 13: %s", result)
             # Cập nhật trường app_trans_id
+            utc_now = datetime.now(pytz.UTC).replace(tzinfo=None)
+
             self.write({
                 'app_trans_id': order['app_trans_id'],
                 'zalopay_amount': int_amount,
-                'last_status_check': fields.Datetime.now(),
-                'next_check': fields.Datetime.now() + timedelta(minutes=1)
+                'last_status_check': utc_now,
+                'next_check': utc_now + timedelta(minutes=1)
             })
             # threading.Timer(60, self.query_zalopay_status, args=[order['app_trans_id']]).start()
         
