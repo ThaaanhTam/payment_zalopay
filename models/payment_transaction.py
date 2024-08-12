@@ -6,8 +6,8 @@ import urllib.parse
 from datetime import datetime,timedelta
 from time import time
 import random
-import pytz
 import threading
+import pytz
 
 
 from werkzeug import urls
@@ -81,15 +81,14 @@ class PaymentTransaction(models.Model):
             _logger.info(urllib.parse.urlencode(order).encode())
             result = json.loads(response.read())
             _logger.info("Tạo hóa đơn thành công 13: %s", result)
-            # Cập nhật trường app_trans_id
             utc_now = datetime.now(pytz.UTC).replace(tzinfo=None)
-            _logger.info("haaaaaaahahhhhhhhahahahahhhhhhhhhhhahahaahahahhha: %s",utc_now)
-            
+
+            # Cập nhật trường app_trans_id
             self.write({
                 'app_trans_id': order['app_trans_id'],
                 'zalopay_amount': int_amount,
                 'last_status_check': utc_now,
-                'next_check': utc_now + timedelta(minutes=1)
+                'next_check': utc_now  + timedelta(minutes=1)
             })
             # threading.Timer(60, self.query_zalopay_status, args=[order['app_trans_id']]).start()
         
@@ -160,7 +159,7 @@ class PaymentTransaction(models.Model):
         transactions = self.search([
             ('provider_code', '=', 'zalopay'),
             ('status', '=', 'pending'),
-            ('next_check', '<=', fields.Datetime.now())  # Chỉ lấy các giao dịch cần kiểm tra
+            ('next_check', '<=', datetime.now(pytz.UTC).replace(tzinfo=None))  # Chỉ lấy các giao dịch cần kiểm tra
         ])
         
         for tx in transactions:
