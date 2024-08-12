@@ -82,14 +82,16 @@ class PaymentTransaction(models.Model):
             result = json.loads(response.read())
             _logger.info("Tạo hóa đơn thành công 13: %s", result)
             utc_now = datetime.now(pytz.timezone("Etc/GMT-7")).replace(tzinfo=None)
-            
+            utc = datetime.now(pytz.timezone("Etc/GMT-7")) + timedelta(minutes=1)
+            next_check = utc.replace(tzinfo=None)
+            _logger.info("utc_now: %s,next_check: %s", utc_now, next_check)
             # current_datetime = fields.Datetime.context_timestamp(self, utc_now).replace(tzinfo=None)
             # Cập nhật trường app_trans_id
             self.write({
                 'app_trans_id': order['app_trans_id'],
                 'zalopay_amount': int_amount,
                 'last_status_check': utc_now,
-                'next_check': utc_now  + timedelta(minutes=1)
+                'next_check': next_check  
             })
             # threading.Timer(60, self.query_zalopay_status, args=[order['app_trans_id']]).start()
         
