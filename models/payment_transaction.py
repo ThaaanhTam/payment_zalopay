@@ -83,7 +83,8 @@ class PaymentTransaction(models.Model):
             _logger.info("Tạo hóa đơn thành công 13: %s", result)
             # Cập nhật trường app_trans_id
             utc_now = datetime.now(pytz.UTC).replace(tzinfo=None)
-
+            _logger.info("haaaaaaahahhhhhhhahahahahhhhhhhhhhhahahaahahahhha: %s",utc_now)
+            
             self.write({
                 'app_trans_id': order['app_trans_id'],
                 'zalopay_amount': int_amount,
