@@ -122,6 +122,16 @@ class ZaloPayController(http.Controller):
                 # Gọi API truy vấn trạng thái thanh toán
                 app_trans_id = dataJson['app_trans_id']
                 self.query_zalopay_status(app_trans_id)
+                cron_job = self.env.ref("payment_zalopay.ir_cron_check_zalopay_status", False)
+                if cron_job:
+                    if not cron_job.active:
+                        # Nếu cron job đang tắt, bật nó lên
+                        cron_job.write({'active': True})
+                        _logger.info("Cron job đã được bật.")
+                    else:
+                        _logger.info("Cron job đã bật, không cần bật lại.")
+                else:
+                    _logger.warning("Cron job 'Check ZaloPay Transaction Status' không tồn tại.")
         _logger.info("Kết thúc xử lý callback ZaloPay với kết quả: %s", result)
         # Thông báo kết quả cho ZaloPay server
         return request.make_response(json.dumps(result), headers={'Content-Type': 'application/json'})

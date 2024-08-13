@@ -93,6 +93,17 @@ class PaymentTransaction(models.Model):
                 'last_status_check': utc_now,
                 'next_check': next_check  
             })
+
+            cron_job = self.env.ref("payment_zalopay.ir_cron_check_zalopay_status", False)
+            if cron_job:
+                if not cron_job.active:
+                    # Nếu cron job đang tắt, bật nó lên
+                    cron_job.write({'active': True})
+                    _logger.info("Cron job đã được bật.")
+                else:
+                    _logger.info("Cron job đã bật, không cần bật lại.")
+            else:
+                _logger.warning("Cron job 'Check ZaloPay Transaction Status' không tồn tại.")
             # threading.Timer(60, self.query_zalopay_status, args=[order['app_trans_id']]).start()
         
         except Exception as e:
@@ -166,8 +177,31 @@ class PaymentTransaction(models.Model):
             ('next_check', '<=', datetime.now(pytz.timezone("Etc/GMT-7")).replace(tzinfo=None))  # Chỉ lấy các giao dịch cần kiểm tra
         ])
         
-        for tx in transactions:
-            _logger.info("Kiểm tra trạng thái cho app_trans_id: %s", tx.app_trans_id)
-            tx.query_zalopay_status(tx.app_trans_id)
-            # Cập nhật trường next_check để tránh kiểm tra lại
-            tx.write({'next_check': False})
+        cron_job = self.env.ref("payment_zalopay.ir_cron_check_zalopay_status", False)
+        if not cron_job:
+            _logger.warning("Cron job 'Check ZaloPay Transaction Status' không tồn tại")
+            return
+        
+        if not transactions:
+        # Tắt cron job nếu không tìm thấy giao dịch nào cần kiểm tra
+            cron_job = self.env.ref("payment_zalopay.ir_cron_check_zalopay_status", False)
+            if cron_job.active:
+                try:
+                    cron_job.sudo().write({'active': False})
+                    _logger.info("Không tìm thấy giao dịch cần kiểm tra. Đã tắt cron job.")
+                except Exception as e:
+                    _logger.error("Lỗi khi tắt cron job: %s", e)
+        else:
+            for tx in transactions:
+                _logger.info("Kiểm tra trạng thái cho app_trans_id: %s", tx.app_trans_id)
+                tx.query_zalopay_status(tx.app_trans_id)          
+                # Cập nhật trường next_check
+                tx.write({'next_check': False})
+            
+            # Đảm bảo cron job được bật
+            if not cron_job.active:
+                try:
+                    cron_job.write({'active': True})
+                    _logger.info("Đã bật cron job để tiếp tục kiểm tra giao dịch.")
+                except Exception as e:
+                    _logger.error("Lỗi khi bật cron job: %s", e)
