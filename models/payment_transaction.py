@@ -61,7 +61,7 @@ class PaymentTransaction(models.Model):
             "amount": int_amount,
             "description": f"Nếu đọc được này thì đã lấy đc qr thành công #{trans_id}",
             "bank_code": "",
-            "callback_url": urls.url_join(base_url.replace("http://", "https://", 1), '/payment/zalopay/callback'),  # URL callback
+            # "callback_url": urls.url_join(base_url.replace("http://", "https://", 1), '/payment/zalopay/callback'),  # URL callback
         }
         _logger.info(urls.url_join(base_url, '/payment/zalopay/callback'))
             
