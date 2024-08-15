@@ -93,7 +93,7 @@ class PaymentTransaction(models.Model):
                 'last_status_check': utc_now,
                 'next_check': next_check  
             })
-
+            
             cron_job = self.env.ref("payment_zalopay.ir_cron_check_zalopay_status", False)
             if cron_job:
                 if not cron_job.active:
@@ -154,14 +154,24 @@ class PaymentTransaction(models.Model):
             _logger.info("Kết quả truy vấn ZaloPay cho app_trans_id %s: %s", app_trans_id, result)
 
             if result.get("return_code") == 1:  # Kiểm tra xem giao dịch thành công hay không
-                status = result.get("status")
-                if status == 1:  # Giao dịch đã thanh toán thành công
-                    self.write({'status': 'paid'})
-                    _logger.info("Giao dịch %s đã được thanh toán thành công", app_trans_id)
-                elif status == -1:  # Giao dịch thất bại
-                    self.write({'status': 'failed'})
-                    _logger.info("Giao dịch %s đã thất bại", app_trans_id)
-                self.write({'last_status_check': fields.Datetime.now()})
+
+                amount = result.get("amount")
+                if int(self.amount) == int(amount):
+                    _logger.info("Đã cập nhật trạng thái đơn hàng thành công cho app_trans_id = %s", app_trans_id)
+                    self._set_done()
+                    self._reconcile_after_done()
+                    
+                    # Cập nhật phản hồi
+                    result['return_code'] = 1
+                    result['return_message'] = 'success'
+                else:
+                    _logger.error("Số tiền thanh toán không khớp cho app_trans_id %s", app_trans_id)
+                    
+            elif result.get("return_code") == 3:  # Giao dịch thất bại
+                self.write({'status': 'failed'})
+                _logger.info("Giao dịch %s đã thất bại", app_trans_id)
+            
+            self.write({'last_status_check': fields.Datetime.now()})
 
         except Exception as e:
             _logger.error("Lỗi khi truy vấn trạng thái thanh toán ZaloPay cho app_trans_id %s: %s", app_trans_id, str(e))
