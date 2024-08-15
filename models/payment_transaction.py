@@ -80,7 +80,7 @@ class PaymentTransaction(models.Model):
             response = urllib.request.urlopen(url="https://sb-openapi.zalopay.vn/v2/create", data=urllib.parse.urlencode(order).encode())
             _logger.info(urllib.parse.urlencode(order).encode())
             result = json.loads(response.read())
-            _logger.info("Tạo hóa đơn thành công 13: %s", result)
+            _logger.info("Tạo hóa đơn thành công 121212121: %s", result)
             utc_now = datetime.now(pytz.timezone("Etc/GMT-7")).replace(tzinfo=None)
             utc = datetime.now(pytz.timezone("Etc/GMT-7")) + timedelta(minutes=1)
             next_check = utc.replace(tzinfo=None)
