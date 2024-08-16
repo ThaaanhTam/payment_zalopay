@@ -27,7 +27,7 @@ class PaymentTransaction(models.Model):
         ('failed', 'Failed')
     ], string="Payment Status", default='pending')
     next_check = fields.Datetime(string="Next Status Check")
-
+    needs_status_check = fields.Boolean(string="Needs Status Check", default=False)
     def _get_specific_rendering_values(self, processing_values):
         res = super()._get_specific_rendering_values(processing_values)
         if self.provider_code != "zalopay":
@@ -159,8 +159,7 @@ class PaymentTransaction(models.Model):
                 if int(self.amount) == int(amount):
                     _logger.info("Đã cập nhật trạng thái đơn hàng thành công cho app_trans_id = %s", app_trans_id)
                     self._set_done()
-                    self._reconcile_after_done()
-                    
+                    self._reconcile_after_done() 
                     # Cập nhật phản hồi
                     result['return_code'] = 1
                     result['return_message'] = 'success'
@@ -182,11 +181,14 @@ class PaymentTransaction(models.Model):
     def cron_check_zalopay_status(self):
         _logger.info("chạy cronnnnnnnnnnnnn")
         transactions = self.search([
+            "&",
             ('provider_code', '=', 'zalopay'),
-            ('status', '=', 'pending'),
-            ('next_check', '<=', datetime.now(pytz.timezone("Etc/GMT-7")).replace(tzinfo=None))  # Chỉ lấy các giao dịch cần kiểm tra
+             "|",
+                ("state", "=", "pending"),
+                ("state", "=", "draft"),
+            ('next_check', '<=', datetime.now(pytz.timezone("Etc/GMT-7")).replace(tzinfo=None)),  # Chỉ lấy các giao dịch cần kiểm tra
+
         ])
-        
         cron_job = self.env.ref("payment_zalopay.ir_cron_check_zalopay_status", False)
         if not cron_job:
             _logger.warning("Cron job 'Check ZaloPay Transaction Status' không tồn tại")
@@ -215,3 +217,8 @@ class PaymentTransaction(models.Model):
                     _logger.info("Đã bật cron job để tiếp tục kiểm tra giao dịch.")
                 except Exception as e:
                     _logger.error("Lỗi khi bật cron job: %s", e)
+    
+
+
+
+    

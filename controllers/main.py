@@ -14,7 +14,7 @@ class ZaloPayController(http.Controller):
     _return_url = "/payment/zalopay/return"
     _callback_url = "/payment/zalopay/callback"
     _max_retry_count = 0
-
+    
 
     @http.route('/payment/zalopay/status', type='http', auth='public', methods=['GET'], website=True)
     def query_zalopay_status(self, app_trans_id=None, **kw):
@@ -98,8 +98,9 @@ class ZaloPayController(http.Controller):
                 tx = request.env['payment.transaction'].sudo().search([('app_trans_id', '=', app_trans_id)], limit=1)
                 if tx:
                     if int(tx.amount) == int(amount):
-                        tx._set_done()
-                        tx._reconcile_after_done()
+                        # tx._set_done()
+                        # tx._reconcile_after_done()
+                        tx.sudo().write({'state': 'paid'})
                         _logger.info("Đã cập nhật trạng thái đơn hàng thành công cho app_trans_id = %s", app_trans_id)
                         result['return_code'] = 1
                         result['return_message'] = 'success'
@@ -115,24 +116,25 @@ class ZaloPayController(http.Controller):
             _logger.error("Xử lý callback ZaloPay thất bại: %s", e)
             result['return_code'] = 0  # ZaloPay server sẽ callback lại (tối đa 3 lần)
             result['e'] = str(e)
-            result['retry_count'] = getattr(self, '_retry_count', 0) + 1
-            setattr(self, '_retry_count', result['retry_count'])
-            
-            if result['retry_count'] > self._max_retry_count:
-                # Gọi API truy vấn trạng thái thanh toán
-                app_trans_id = dataJson['app_trans_id']
-                self.query_zalopay_status(app_trans_id)
+            tx = request.env['payment.transaction'].sudo().search([('app_trans_id', '=', dataJson.get('app_trans_id'))], limit=1)
+        if tx:
+            retry_count = tx.retry_count + 1 if tx.retry_count else 1
+            tx.sudo().write({'retry_count': retry_count})
+            if retry_count >= 3:
+                _logger.warning("Quá số lần thử callback cho app_trans_id = %s. Sử dụng cron job để kiểm tra.", app_trans_id)
+                self.query_zalopay_status(app_trans_id)  # Truy vấn trạng thái qua API nếu callback thất bại nhiều lần
+                # Đảm bảo cron job kiểm tra trạng thái được bật
                 cron_job = self.env.ref("payment_zalopay.ir_cron_check_zalopay_status", False)
-                if cron_job:
-                    if not cron_job.active:
-                        # Nếu cron job đang tắt, bật nó lên
-                        cron_job.write({'active': True})
-                        _logger.info("Cron job đã được bật.")
-                    else:
-                        _logger.info("Cron job đã bật, không cần bật lại.")
+                if cron_job and not cron_job.active:
+                    cron_job.write({'active': True})
+                    _logger.info("Cron job đã được bật để kiểm tra trạng thái giao dịch.")
                 else:
-                    _logger.warning("Cron job 'Check ZaloPay Transaction Status' không tồn tại.")
+                    _logger.info("Cron job đã bật, không cần bật lại.")
+            else:
+                _logger.warning("Cron job 'Check ZaloPay Transaction Status' không tồn tại.")
         _logger.info("Kết thúc xử lý callback ZaloPay với kết quả: %s", result)
+
+        
         # Thông báo kết quả cho ZaloPay server
         return request.make_response(json.dumps(result), headers={'Content-Type': 'application/json'})
     
