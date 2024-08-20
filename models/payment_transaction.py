@@ -199,13 +199,15 @@ class PaymentTransaction(models.Model):
         
         if not transactions:
         # Tắt cron job nếu không tìm thấy giao dịch nào cần kiểm tra
-            cron_job = self.env.ref("payment_zalopay.ir_cron_check_zalopay_status", False)
-            if cron_job.active:
-                try:
-                    cron_job.sudo().write({'active': False})
-                    _logger.info("Không tìm thấy giao dịch cần kiểm tra. Đã tắt cron job.")
-                except Exception as e:
-                    _logger.error("Lỗi khi tắt cron job: %s", e)
+            # cron_job = self.env.ref("payment_zalopay.ir_cron_check_zalopay_status", False)
+            # if cron_job.active:
+            #     try:
+            #         cron_job.sudo().write({'active': False})
+            #         _logger.info("Không tìm thấy giao dịch cần kiểm tra. Đã tắt cron job.")
+            #     except Exception as e:
+            _logger.info("Không tìm thấy giao dịch ")
+            #         _logger.error("Lỗi khi tắt cron job: %s", e)
+        
         else:
             for tx in transactions:
                 _logger.info("Kiểm tra trạng thái cho app_trans_id: %s", tx.app_trans_id)
@@ -214,12 +216,12 @@ class PaymentTransaction(models.Model):
                 tx.write({'next_check': False})
             
             # Đảm bảo cron job được bật
-            if not cron_job.active:
-                try:
-                    cron_job.write({'active': True})
-                    _logger.info("Đã bật cron job để tiếp tục kiểm tra giao dịch.")
-                except Exception as e:
-                    _logger.error("Lỗi khi bật cron job: %s", e)
+            # if not cron_job.active:
+            #     try:
+            #         cron_job.write({'active': True})
+            #         _logger.info("Đã bật cron job để tiếp tục kiểm tra giao dịch.")
+            #     except Exception as e:
+            #         _logger.error("Lỗi khi bật cron job: %s", e)
     
 
 

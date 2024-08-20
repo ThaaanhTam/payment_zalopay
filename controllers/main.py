@@ -101,8 +101,8 @@ class ZaloPayController(http.Controller):
                 tx = request.env['payment.transaction'].sudo().search([('app_trans_id', '=', app_trans_id)], limit=1)
                 if tx:
                     if int(tx.amount) == int(amount):
-                        tx._set_done()
-                        tx._reconcile_after_done()
+                        # tx._set_done()
+                        # tx._reconcile_after_done()
                         # tx.sudo().write({'state': 'paid'})
                         _logger.info("Đã cập nhật trạng thái đơn hàng thành công cho app_trans_id = %s", app_trans_id)
                         result['return_code'] = 1
