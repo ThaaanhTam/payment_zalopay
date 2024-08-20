@@ -27,7 +27,10 @@ class PaymentTransaction(models.Model):
         ('failed', 'Failed')
     ], string="Payment Status", default='pending')
     next_check = fields.Datetime(string="Next Status Check")
-    needs_status_check = fields.Boolean(string="Needs Status Check", default=False)
+    # needs_status_check = fields.Boolean(string="Needs Status Check", default=False)
+    failed_callback_count = fields.Integer(string="Số lần callback thất bại", default=0)
+
+
     def _get_specific_rendering_values(self, processing_values):
         res = super()._get_specific_rendering_values(processing_values)
         if self.provider_code != "zalopay":
@@ -94,16 +97,16 @@ class PaymentTransaction(models.Model):
                 'next_check': next_check  
             })
             
-            cron_job = self.env.ref("payment_zalopay.ir_cron_check_zalopay_status", False)
-            if cron_job:
-                if not cron_job.active:
-                    # Nếu cron job đang tắt, bật nó lên
-                    cron_job.write({'active': True})
-                    _logger.info("Cron job đã được bật.")
-                else:
-                    _logger.info("Cron job đã bật, không cần bật lại.")
-            else:
-                _logger.warning("Cron job 'Check ZaloPay Transaction Status' không tồn tại.")
+            # cron_job = self.env.ref("payment_zalopay.ir_cron_check_zalopay_status", False)
+            # if cron_job:
+            #     if not cron_job.active:
+            #         # Nếu cron job đang tắt, bật nó lên
+            #         cron_job.write({'active': True})
+            #         _logger.info("Cron job đã được bật.")
+            #     else:
+            #         _logger.info("Cron job đã bật, không cần bật lại.")
+            # else:
+            #     _logger.warning("Cron job 'Check ZaloPay Transaction Status' không tồn tại.")
             # threading.Timer(60, self.query_zalopay_status, args=[order['app_trans_id']]).start()
         
         except Exception as e:
@@ -170,7 +173,7 @@ class PaymentTransaction(models.Model):
                 self.write({'status': 'failed'})
                 _logger.info("Giao dịch %s đã thất bại", app_trans_id)
             
-            self.write({'last_status_check': fields.Datetime.now()})
+            # self.write({'last_status_check': fields.Datetime.now()})
 
         except Exception as e:
             _logger.error("Lỗi khi truy vấn trạng thái thanh toán ZaloPay cho app_trans_id %s: %s", app_trans_id, str(e))

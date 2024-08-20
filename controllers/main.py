@@ -7,6 +7,9 @@ from werkzeug.exceptions import Forbidden
 from odoo import _, http
 from odoo.exceptions import ValidationError
 from odoo.http import request
+from datetime import datetime, timedelta
+import pytz
+
 
 _logger = logging.getLogger(__name__)
 
@@ -116,25 +119,16 @@ class ZaloPayController(http.Controller):
             _logger.error("Xử lý callback ZaloPay thất bại: %s", e)
             result['return_code'] = 0  # ZaloPay server sẽ callback lại (tối đa 3 lần)
             result['e'] = str(e)
-            tx = request.env['payment.transaction'].sudo().search([('app_trans_id', '=', dataJson.get('app_trans_id'))], limit=1)
+            tx = request.env['payment.transaction'].sudo().search([('app_trans_id', '=', app_trans_id)], limit=1)
         if tx:
-            retry_count = tx.retry_count + 1 if tx.retry_count else 1
-            tx.sudo().write({'retry_count': retry_count})
-            if retry_count >= 3:
-                _logger.warning("Quá số lần thử callback cho app_trans_id = %s. Sử dụng cron job để kiểm tra.", app_trans_id)
-                self.query_zalopay_status(app_trans_id)  # Truy vấn trạng thái qua API nếu callback thất bại nhiều lần
-                # Đảm bảo cron job kiểm tra trạng thái được bật
-                cron_job = self.env.ref("payment_zalopay.ir_cron_check_zalopay_status", False)
-                if cron_job and not cron_job.active:
-                    cron_job.write({'active': True})
-                    _logger.info("Cron job đã được bật để kiểm tra trạng thái giao dịch.")
-                else:
-                    _logger.info("Cron job đã bật, không cần bật lại.")
-            else:
-                _logger.warning("Cron job 'Check ZaloPay Transaction Status' không tồn tại.")
+            tx.failed_callback_count = tx.failed_callback_count + 1 if hasattr(tx, 'failed_callback_count') else 1
+            _logger.info(tx.failed_callback_count)
+            if tx.failed_callback_count > 1:
+                # Cộng thêm 15 phút vào next_check
+                from datetime import datetime, timedelta
+                tx.next_check = datetime.now(pytz.timezone("Etc/GMT-7")) + timedelta(minutes=1)
+                _logger.info(f"Đã cập nhật next_check cho app_trans_id {app_trans_id} sau 3 lần thất bại")
         _logger.info("Kết thúc xử lý callback ZaloPay với kết quả: %s", result)
-
-        
         # Thông báo kết quả cho ZaloPay server
         return request.make_response(json.dumps(result), headers={'Content-Type': 'application/json'})
     
