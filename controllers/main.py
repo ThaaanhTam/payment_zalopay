@@ -123,9 +123,8 @@ class ZaloPayController(http.Controller):
         if tx:
             tx.failed_callback_count = tx.failed_callback_count + 1 if hasattr(tx, 'failed_callback_count') else 1
             _logger.info(tx.failed_callback_count)
-            if tx.failed_callback_count > 1:
+            if tx.failed_callback_count > 3:
                 # Cộng thêm 15 phút vào next_check
-                from datetime import datetime, timedelta
                 tx.next_check = datetime.now(pytz.timezone("Etc/GMT-7")) + timedelta(minutes=1)
                 _logger.info(f"Đã cập nhật next_check cho app_trans_id {app_trans_id} sau 3 lần thất bại")
         _logger.info("Kết thúc xử lý callback ZaloPay với kết quả: %s", result)

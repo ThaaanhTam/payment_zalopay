@@ -97,18 +97,7 @@ class PaymentTransaction(models.Model):
                 'next_check': next_check  
             })
             
-            # cron_job = self.env.ref("payment_zalopay.ir_cron_check_zalopay_status", False)
-            # if cron_job:
-            #     if not cron_job.active:
-            #         # Nếu cron job đang tắt, bật nó lên
-            #         cron_job.write({'active': True})
-            #         _logger.info("Cron job đã được bật.")
-            #     else:
-            #         _logger.info("Cron job đã bật, không cần bật lại.")
-            # else:
-            #     _logger.warning("Cron job 'Check ZaloPay Transaction Status' không tồn tại.")
-            # threading.Timer(60, self.query_zalopay_status, args=[order['app_trans_id']]).start()
-        
+            
         except Exception as e:
             _logger.error("ZaloPay create order failed: %s", e)
             raise ValidationError(_("fffffffffffffffffffffffff: %s") % e)
@@ -139,12 +128,10 @@ class PaymentTransaction(models.Model):
                 "key1": "sdngKKJmqEMzvh5QQcdD2A9XBSKUNaYn",
                 "endpoint": "https://sb-openapi.zalopay.vn/v2/query"
             }
-
             params = {
                 "app_id": config["app_id"],
                 "app_trans_id": app_trans_id
             }
-
             data = "{}|{}|{}".format(config["app_id"], params["app_trans_id"], config["key1"])
             params["mac"] = hmac.new(config['key1'].encode(), data.encode(), hashlib.sha256).hexdigest()
 
@@ -166,6 +153,7 @@ class PaymentTransaction(models.Model):
                     # Cập nhật phản hồi
                     result['return_code'] = 1
                     result['return_message'] = 'success'
+                    _logger.info("aaaaaaaaaaaaaaaaaaaaa,%s", self.state)
                 else:
                     _logger.error("Số tiền thanh toán không khớp cho app_trans_id %s", app_trans_id)
                     
