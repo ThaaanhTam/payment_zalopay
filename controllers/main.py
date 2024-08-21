@@ -90,7 +90,7 @@ class ZaloPayController(http.Controller):
                 # Cập nhật trạng thái cho đơn hàng
                 dataJson = json.loads(cbdata['data'])
                 # app_trans_id = dataJson['app_trans_id']
-                app_trans_id = 210824_125456
+                app_trans_id = dataJson['app_trans_id']
 
                 amount = dataJson['amount']
                 _logger.info("Cập nhật trạng thái đơn hàng = success cho app_trans_id = %s", app_trans_id)
@@ -100,7 +100,7 @@ class ZaloPayController(http.Controller):
                 for tx in all_transactions:
                     _logger.info("Giao dịch hiện có: %s với app_trans_id: %s", tx.id, tx.app_trans_id)
                 #  Tìm giao dịch tương ứng với app_trans_id
-                tx = request.env['payment.transaction'].sudo().search([('app_trans_id', '=', app_trans_id)], limit=1)
+                tx = request.env['payment.transaction'].sudo().search([('app_transs_id', '=', app_trans_id)], limit=1)
                 if tx:
                     if int(tx.amount) == int(amount):
                         tx._set_done()
