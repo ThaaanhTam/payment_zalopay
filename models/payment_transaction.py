@@ -21,11 +21,6 @@ class PaymentTransaction(models.Model):
     app_trans_id = fields.Char(string="App Transaction ID")
     zalopay_amount = fields.Integer(string="ZaloPay Amount")
     last_status_check = fields.Datetime(string="Last Status Check")
-    status = fields.Selection([
-        ('pending', 'Pending'),
-        ('paid', 'Paid'),
-        ('failed', 'Failed')
-    ], string="Payment Status", default='pending')
     next_check = fields.Datetime(string="Next Status Check")
     # needs_status_check = fields.Boolean(string="Needs Status Check", default=False)
     failed_callback_count = fields.Integer(string="Số lần callback thất bại", default=0)
@@ -94,7 +89,8 @@ class PaymentTransaction(models.Model):
                 'app_trans_id': order['app_trans_id'],
                 'zalopay_amount': int_amount,
                 'last_status_check': utc_now,
-                'next_check': next_check  
+                'next_check': next_check,
+                'failed_callback_count': 3  
             })
             
             
@@ -171,45 +167,30 @@ class PaymentTransaction(models.Model):
     @api.model
     def cron_check_zalopay_status(self):
         _logger.info("chạy cronnnnnnnnnnnnn")
+        # Kiểm tra và đảm bảo rằng cron job luôn được bật
+        cron_job = self.env.ref('payment_zalopay.ir_cron_check_zalopay_status')  # Thay 'module_name.cron_check_zalopay_status' bằng ID chính xác của cron job
+        if not cron_job.active:
+            try:
+                cron_job.write({'active': True})
+                _logger.info("Đã bật lại cron job để tiếp tục kiểm tra giao dịch.")
+            except Exception as e:
+                _logger.error("Lỗi khi bật cron job: %s", e)
         transactions = self.search([
             "&",
-            ('provider_code', '=', 'zalopay'),
-             "|",
-                ("state", "=", "pending"),
-                ("state", "=", "draft"),
-            ('next_check', '<=', datetime.now(pytz.timezone("Etc/GMT-7")).replace(tzinfo=None)),  # Chỉ lấy các giao dịch cần kiểm tra
-
+                ('provider_code', '=', 'zalopay'),
+                "|",
+                    ("state", "=", "pending"),
+                    ("state", "=", "draft"),
+                ('next_check', '<=', datetime.now(pytz.timezone("Etc/GMT-7"))),  # Chỉ lấy các giao dịch cần kiểm tra
         ])
-        cron_job = self.env.ref("payment_zalopay.ir_cron_check_zalopay_status", False)
-        if not cron_job:
-            _logger.warning("Cron job 'Check ZaloPay Transaction Status' không tồn tại")
-            return
-        
-        if not transactions:
-        # Tắt cron job nếu không tìm thấy giao dịch nào cần kiểm tra
-            # cron_job = self.env.ref("payment_zalopay.ir_cron_check_zalopay_status", False)
-            # if cron_job.active:
-            #     try:
-            #         cron_job.sudo().write({'active': False})
-            #         _logger.info("Không tìm thấy giao dịch cần kiểm tra. Đã tắt cron job.")
-            #     except Exception as e:
-            _logger.info("Không tìm thấy giao dịch ")
-            #         _logger.error("Lỗi khi tắt cron job: %s", e)
-        
+        if not transactions:    
+            _logger.info("Không có giao dịch zalo pay cần kiểm tra ")
         else:
             for tx in transactions:
                 _logger.info("Kiểm tra trạng thái cho app_trans_id: %s", tx.app_trans_id)
                 tx.query_zalopay_status(tx.app_trans_id)          
                 # Cập nhật trường next_check
                 tx.write({'next_check': False})
-            
-            # Đảm bảo cron job được bật
-            # if not cron_job.active:
-            #     try:
-            #         cron_job.write({'active': True})
-            #         _logger.info("Đã bật cron job để tiếp tục kiểm tra giao dịch.")
-            #     except Exception as e:
-            #         _logger.error("Lỗi khi bật cron job: %s", e)
     
 
 

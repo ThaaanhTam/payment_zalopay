@@ -89,7 +89,9 @@ class ZaloPayController(http.Controller):
                 # Thanh toán thành công
                 # Cập nhật trạng thái cho đơn hàng
                 dataJson = json.loads(cbdata['data'])
-                app_trans_id = dataJson['app_trans_id']
+                # app_trans_id = dataJson['app_trans_id']
+                app_trans_id = 210824_125456
+
                 amount = dataJson['amount']
                 _logger.info("Cập nhật trạng thái đơn hàng = success cho app_trans_id = %s", app_trans_id)
               
@@ -101,9 +103,8 @@ class ZaloPayController(http.Controller):
                 tx = request.env['payment.transaction'].sudo().search([('app_trans_id', '=', app_trans_id)], limit=1)
                 if tx:
                     if int(tx.amount) == int(amount):
-                        # tx._set_done()
-                        # tx._reconcile_after_done()
-                        # tx.sudo().write({'state': 'paid'})
+                        tx._set_done()
+                        tx._reconcile_after_done()
                         _logger.info("Đã cập nhật trạng thái đơn hàng thành công cho app_trans_id = %s", app_trans_id)
                         result['return_code'] = 1
                         result['return_message'] = 'success'
@@ -120,14 +121,15 @@ class ZaloPayController(http.Controller):
             result['return_code'] = 0  # ZaloPay server sẽ callback lại (tối đa 3 lần)
             result['e'] = str(e)
             tx = request.env['payment.transaction'].sudo().search([('app_trans_id', '=', app_trans_id)], limit=1)
-        if tx:
-            tx.failed_callback_count = tx.failed_callback_count + 1 if hasattr(tx, 'failed_callback_count') else 1
-            _logger.info(tx.failed_callback_count)
-            if tx.failed_callback_count > 3:
-                # Cộng thêm 15 phút vào next_check
-                tx.next_check = datetime.now(pytz.timezone("Etc/GMT-7")) + timedelta(minutes=1)
-                _logger.info(f"Đã cập nhật next_check cho app_trans_id {app_trans_id} sau 3 lần thất bại")
-        _logger.info("Kết thúc xử lý callback ZaloPay với kết quả: %s", result)
+            if tx:
+                tx.failed_callback_count = tx.failed_callback_count - 3 
+                _logger.info(tx.failed_callback_count)
+                if tx.failed_callback_count == 0:
+                    # Cộng thêm 15 phút vào next_check
+                    tx.next_check = datetime.now(pytz.timezone("Etc/GMT-7")) + timedelta(minutes=1)
+                    tx.state = 'pending'
+                    _logger.info(f"Đã cập nhật next_check cho app_trans_id {app_trans_id} sau 3 lần thất bại")
+            _logger.info("Kết thúc xử lý callback ZaloPay với kết quả: %s", result)
         # Thông báo kết quả cho ZaloPay server
         return request.make_response(json.dumps(result), headers={'Content-Type': 'application/json'})
     
