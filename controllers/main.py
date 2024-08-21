@@ -129,7 +129,9 @@ class ZaloPayController(http.Controller):
                     tx.next_check = datetime.now(pytz.timezone("Etc/GMT-7")) + timedelta(minutes=1)
                     tx.state = 'pending'
                     _logger.info(f"Đã cập nhật next_check cho app_trans_id {app_trans_id} sau 3 lần thất bại")
-            _logger.info("Kết thúc xử lý callback ZaloPay với kết quả: %s", result)
+        _logger.info("Kết thúc xử lý callback ZaloPay với kết quả: %s", result)
+        _logger.info("Dữ liệu phản hồi gửi lên ZaloPay: %s", json.dumps(result))
+        _logger.info("Headers phản hồi gửi lên ZaloPay: %s", {'Content-Type': 'application/json'})
         # Thông báo kết quả cho ZaloPay server
         return request.make_response(json.dumps(result), headers={'Content-Type': 'application/json'})
     
