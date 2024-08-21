@@ -114,9 +114,10 @@ class ZaloPayController(http.Controller):
                             _logger.info(tx.failed_callback_count)
                             if tx.failed_callback_count == 0:
                                 # Cộng thêm 15 phút vào next_check
-                                new_next_check = datetime.now(pytz.timezone("Etc/GMT-7")) + timedelta(minutes=15)
+                                new_next_check = datetime.now(pytz.timezone("Etc/GMT-7")) + timedelta(minutes=1)
                                 tx.next_check = new_next_check.replace(tzinfo=None)
                                 tx.state = 'pending'
+                                _logger.info(tx.next_check)
                                 _logger.info(f"Đã cập nhật next_check cho app_trans_id {app_trans_id} sau 3 lần thất bại")
                     else:
                         _logger.warning("Số tiền không khớp cho app_trans_id = %s", app_trans_id)
