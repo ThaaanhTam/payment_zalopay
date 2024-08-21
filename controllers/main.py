@@ -77,8 +77,8 @@ class ZaloPayController(http.Controller):
             zalopay_provider = request.env['payment.provider'].sudo().search([('code', '=', 'zalopay')], limit=1)
             key2 = zalopay_provider.key2
 
-            # mac = hmac.new(key2.encode(), cbdata['data'].encode(), hashlib.sha256).hexdigest()
-            mac = "kkkk"
+            mac = hmac.new(key2.encode(), cbdata['data'].encode(), hashlib.sha256).hexdigest()
+            
             # Kiểm tra callback hợp lệ (đến từ ZaloPay server)
             if mac != cbdata['mac']:
                 # Callback không hợp lệ
