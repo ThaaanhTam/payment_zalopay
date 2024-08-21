@@ -78,20 +78,19 @@ class ZaloPayController(http.Controller):
             key2 = zalopay_provider.key2
 
             mac = hmac.new(key2.encode(), cbdata['data'].encode(), hashlib.sha256).hexdigest()
+            raise Exception("Lỗi giả định")
 
             # Kiểm tra callback hợp lệ (đến từ ZaloPay server)
             if mac != cbdata['mac']:
                 # Callback không hợp lệ
                 _logger.info("Không nhận được dữ liệu JSON từ ZaloPay")
-                result['return_code'] = 0
+                result['return_code'] = -1
                 result['return_message'] = 'mac not equal'
             else:
                 # Thanh toán thành công
                 # Cập nhật trạng thái cho đơn hàng
                 dataJson = json.loads(cbdata['data'])
-                # app_trans_id = dataJson['app_trans_id']
                 app_trans_id = dataJson['app_trans_id']
-
                 amount = dataJson['amount']
                 _logger.info("Cập nhật trạng thái đơn hàng = success cho app_trans_id = %s", app_trans_id)
               
@@ -103,18 +102,18 @@ class ZaloPayController(http.Controller):
                 tx = request.env['payment.transaction'].sudo().search([('app_trans_id', '=', app_trans_id)], limit=1)
                 if tx:
                     if int(tx.amount) == int(amount):
-                        # tx._set_done()
-                        # tx._reconcile_after_done()
+                        tx._set_done()
+                        tx._reconcile_after_done()
                         _logger.info("Đã cập nhật trạng thái đơn hàng thành công cho app_trans_id = %s", app_trans_id)
-                        result['return_code'] = 0
+                        result['return_code'] = 1
                         result['return_message'] = 'success'
                     else:
                         _logger.warning("Số tiền không khớp cho app_trans_id = %s", app_trans_id)
-                        result['return_code'] = 0
+                        result['return_code'] = -1
                         result['return_message'] = 'amount not equal'
                 else:
                     _logger.warning("Không tìm thấy giao dịch với app_trans_id = %s", app_trans_id)
-                    result['return_code'] = 0
+                    result['return_code'] = -1
                     result['return_message'] = 'Transaction not found'
         except Exception as e:
             _logger.error("Xử lý callback ZaloPay thất bại: %s", e)
@@ -130,8 +129,6 @@ class ZaloPayController(http.Controller):
                     tx.state = 'pending'
                     _logger.info(f"Đã cập nhật next_check cho app_trans_id {app_trans_id} sau 3 lần thất bại")
         _logger.info("Kết thúc xử lý callback ZaloPay với kết quả: %s", result)
-        _logger.info("Dữ liệu phản hồi gửi lên ZaloPay: %s", json.dumps(result))
-        _logger.info("Headers phản hồi gửi lên ZaloPay: %s", {'Content-Type': 'application/json'})
         # Thông báo kết quả cho ZaloPay server
         return request.make_response(json.dumps(result), headers={'Content-Type': 'application/json'})
     
